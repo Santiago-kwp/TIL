@@ -83,8 +83,9 @@ $ git log --oneline
 $ git add .
 $ git commit -m '6th commit'
 ```
-#### Auto Merge 방식
-# master에서 작업을 하게 된다면??!!
+#### Auto Merge & Manual merge 방식
+#### master에서 작업을 하게 된다면??!!
+
 ```bash
 $ touch master.txt
 $ git log --oneline
@@ -133,3 +134,4 @@ $ git add .
 $ git commit -m '16th commit : conflict merge'
 $ git add .
 $ git commit -m '17th commit'
+```
