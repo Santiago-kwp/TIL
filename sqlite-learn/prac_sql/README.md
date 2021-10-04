@@ -340,3 +340,257 @@ ALTER TABLE table_name RENAME COLUMN current_name TO new_name;
 
 ### <span style = "color:blue">SQL & ORM</span>
 
+> Shell 정리 및 종료
+
+- in sqlite
+
+  - .shell clear
+  - .exit
+
+- in django_shell_plus
+
+  - clear (`cls`)
+  - exit
+
+  
+
+> Django Project Setting
+
+```bash
+$ pip install -r requirements.txt
+$ python manage.py migrate
+$ python manage.py sqlmigrate users 0001
+$ sqlite3 db.sqlite3
+```
+
+![image-20211004184515001](README.assets/image-20211004184515001.png)
+
+![image-20211004184611010](README.assets/image-20211004184611010.png)
+
+
+
+### READ
+
+> 모든 user 레코드 조회 - ORM
+
+- QuerySet으로 반환됨!
+
+```python
+User.objects.all()
+```
+
+![image-20211004185028661](README.assets/image-20211004185028661.png)
+
+> 특정 user 레코드 조회 - ORM
+
+```python
+User.objects.get(pk=101)
+```
+
+![image-20211004185615321](README.assets/image-20211004185615321.png)
+
+### CREATE
+
+> user 레코드 생성
+
+```python
+User.objects.create(first_name='준생', last_name='취', age='25', country='대전', phone='010-123-5678', balance=10000)
+# balance를 제외한다면 NOT NULL constraint 오류 발생
+User.objects.create(first_name='준생', last_name='취', age='25', country='대전', phone='010-123-5678')
+```
+
+![image-20211004185222586](README.assets/image-20211004185222586.png)
+
+![image-20211004185416529](README.assets/image-20211004185416529.png)
+
+![image-20211004185529246](README.assets/image-20211004185529246.png)
+
+
+
+### UPDATE
+
+> 특정 user 레코드 수정 - ORM
+
+```python
+user = User.objects.get(pk=101)
+user.last_name = '김'
+user.save()
+user.last_name
+```
+
+![image-20211004185811191](README.assets/image-20211004185811191.png)
+
+![image-20211004185824751](README.assets/image-20211004185824751.png)
+
+
+
+### DELETE
+
+> 특정 user 레코드 삭제 - ORM
+
+```python
+User.objects.get(pk=101).delete()
+```
+
+
+
+### READ
+
+> 나이가 30살인 사람들의 이름 -ORM
+
+```python
+User.objects.filter(age=30).values('first_name')
+# SELECT first_name FROM users_user WHERE age = 30;
+```
+
+![image-20211004215356418](README.assets/image-20211004215356418.png)
+
+
+
+> 조건에 따른 쿼리문
+
+- 대/소 관계 비교 조건
+  - `__gte, __gt, __lte, __lt`
+
+> 나이가 30살 이상인 사람의 인원 수 - ORM
+
+```python
+User.objects.filter(age__gte=30).count()
+# SELECT COUNT(*) FROM users_user WHERE age >= 30;
+```
+
+![image-20211004220350539](README.assets/image-20211004220350539.png)
+
+
+
+> AND
+
+- 나이가 30살이면서 성이 김씨인 사람의 인원 수
+
+```python
+User.objects.filter(age=30, last_name='김').count()
+# SELECT COUNT(*) FROM users_user WHERE age=30 AND last_name='김';
+```
+
+![image-20211004222128362](README.assets/image-20211004222128362.png)
+
+
+
+> OR
+
+- 나이가 30살이거나 성이 김씨인 사람의 인원 수
+
+```python
+# OR을 활용하고 싶다면, Q object를 활용
+from django.db.models import Q
+User.objects.filter(Q(age=30) | Q(last_name='김')).count()
+# SELECT COUNT(*) FROM users_user WHERE age=30 OR last_name='김';
+
+```
+
+![image-20211004223621134](README.assets/image-20211004223621134.png)
+
+
+
+> LIKE
+
+- 지역번호가 02인 사람의 인원 수
+
+```python
+User.objects.filter(phone__startswith='02-').count()
+# SELECT COUNT(*) FROM users_user WHERE phone LIKE('02-%');
+```
+
+![image-20211004223931404](README.assets/image-20211004223931404.png)
+
+
+
+> 특정 컬럼 데이터만 조회하기
+
+- 주소가 강원도이면서 성이 황씨인 사람의 이름
+
+```python
+User.objects.filter(country='강원도', last_name='황').values('first_name')
+# SELECT first_name FROM users_user WHERE country='강원도' AND last_name ='황';
+```
+
+
+
+> 정렬, LIMIT, OFFSET
+
+- 나이가 많은 사람 순으로 10명만 조회
+
+```python
+User.objects.order_by('-age')[:10]
+#SELECT * FROM users_user ORDER BY age DESC LIMIT 10;
+```
+
+- 잔액이 적고, 나이가 많은 순으로 10명만 조회
+
+```python
+User.objects.order_by('balance','-age')[:10]
+# SELECT * FROM users_user ORDER BY balance, age DESC LIMIT 10;
+```
+
+![image-20211004225338713](README.assets/image-20211004225338713.png)
+
+- 성, 이름 내림차순으로 5번쨰 있는 유저 정보 조회
+
+```python
+User.object.order_by('-last_name','-first_name')[4]
+# SELECT * FROM users_user ORDER BY last_name DESC, first_name DESC LIMIT 1 OFFSET 4;
+```
+
+![image-20211004225926697](README.assets/image-20211004225926697.png)
+
+
+
+### Django Aggregation
+
+> aggregate()
+
+- '무언가를 종합, 집합, 합계' 등의 사전적 의미
+- 특정 필드 전체의 합, 평균, 개수 등을 계산할 때 사용
+
+> aggregate 사용하기
+
+- 전체 유저의 평균 나이
+
+```python
+from django.db.models import Avg
+User.objects.aggregate(Avg('age'))
+# SELECT AVG(age) FROM users_user;
+```
+
+![image-20211004230252910](README.assets/image-20211004230252910.png)
+
+
+
+- 지역이 강원도인 유저들의 평균 계좌 잔고
+
+```python
+User.objects.filter(country='강원도').aggregate(Avg('balance'))
+```
+
+![image-20211004230744540](README.assets/image-20211004230744540.png)
+
+
+
+`Max, Sum` 등의 ORM Aggregate method 활용가능!
+
+
+
+> annotate()
+
+- '주석을 달다' 라는 사전적 의미
+- 마치 컬럼 하나를 추가하는 것과 같음
+  - 특정 조건으로 계산된 값을 가진 컬럼을 하나 만들고 추가하는 개념
+  - <span style="color:blue">원본 테이블이 변하는 것이 아님</span>
+- annotate()에 대한 각 인자는 반환되는 QuerySet의 각 객체에 추가될 주석임
+
+```python
+User.objects.values('country').annotate(Count('country'))
+# SELECT country, COUNT(country) FROM users_user GROUP BY country;
+```
+
+![image-20211004231307161](README.assets/image-20211004231307161.png)
