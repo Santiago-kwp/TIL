@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2021-11-14T08:47:58.671Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36" etag="TIx_UkB82JTueRtzvnE4" version="15.7.3" type="github">
+<mxfile host="app.diagrams.net" modified="2021-11-14T11:20:21.012Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36" etag="F8XLQ80bG910B6stnnzp" version="15.7.3" type="github">
   <diagram id="C5RBs43oDa-KdzZeNtuy" name="Page-1">
     <mxGraphModel dx="3716" dy="1154" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
@@ -14,7 +14,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="zBhqYliXO54fjdQmm1mg-1" value="accounts_user" style="shape=table;startSize=30;container=1;collapsible=1;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;resizeLast=1;fontSize=14;" vertex="1" parent="WIyWlLk6GJQsqaUBKTNV-1">
-          <mxGeometry x="-280" y="70" width="211" height="160" as="geometry" />
+          <mxGeometry x="-280" y="65" width="211" height="160" as="geometry" />
         </mxCell>
         <mxCell id="zBhqYliXO54fjdQmm1mg-2" value="" style="shape=partialRectangle;collapsible=0;dropTarget=0;pointerEvents=0;fillColor=none;top=0;left=0;bottom=1;right=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=1;fontSize=14;" vertex="1" parent="zBhqYliXO54fjdQmm1mg-1">
           <mxGeometry y="30" width="211" height="30" as="geometry" />
@@ -465,7 +465,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="zBhqYliXO54fjdQmm1mg-218" value="movies_city" style="shape=table;startSize=35;container=1;collapsible=1;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=1;align=center;resizeLast=1;fontSize=14;" vertex="1" parent="WIyWlLk6GJQsqaUBKTNV-1">
-          <mxGeometry x="619.92" y="225" width="200.08" height="110" as="geometry" />
+          <mxGeometry x="619.92" y="220" width="200.08" height="110" as="geometry" />
         </mxCell>
         <mxCell id="zBhqYliXO54fjdQmm1mg-219" value="" style="shape=partialRectangle;collapsible=0;dropTarget=0;pointerEvents=0;fillColor=none;top=0;left=0;bottom=1;right=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=1;fontSize=14;" vertex="1" parent="zBhqYliXO54fjdQmm1mg-218">
           <mxGeometry y="35" width="200.08" height="30" as="geometry" />
@@ -759,6 +759,9 @@
         </mxCell>
         <mxCell id="zBhqYliXO54fjdQmm1mg-298" value="&lt;b&gt;유저 프로필 및 rank&lt;br&gt;포인트 기능&lt;/b&gt;" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fontSize=13;gradientColor=none;" vertex="1" parent="WIyWlLk6GJQsqaUBKTNV-1">
           <mxGeometry x="-20.08" y="90" width="100.08" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="zBhqYliXO54fjdQmm1mg-299" value="&lt;b&gt;유저 맞춤형 &lt;br&gt;영화 추천을 위한 평점 기능&lt;/b&gt;" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fontSize=13;gradientColor=none;" vertex="1" parent="WIyWlLk6GJQsqaUBKTNV-1">
+          <mxGeometry x="-240" y="500" width="100.08" height="120" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
