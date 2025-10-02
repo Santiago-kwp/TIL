@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      .box {
+        border: 1px solid black;
+      }
+      h1 {
+        margin: 0;
+      }
+      .box ul {
+        list-style: none;
+        padding: 0;
+        max-width: 500px; /* ul 너비를 제한 */
+        margin: 0 auto; /* ul을 가운데 정렬 */
+      }
+
+      .box li {
+        display: flex;
+        align-items: left;
+        margin-bottom: 15px; /* li 간 간격 */
+        gap: 15px; /* label과 input 사이 간격 (flex를 사용하는 경우 유용) */
+      }
+
+      .box li label {
+        width: 80px; /* label의 너비를 고정하여 정렬 */
+        text-align: right; /* label 텍스트를 오른쪽 정렬 */
+      }
+
+      .box li input[type='text'],
+      .box li input[type='tel'],
+      .box li input[type='email'] {
+        flex: 1; /* 남은 공간을 input이 모두 차지하도록 설정 */
+        box-sizing: border-box; /* padding과 border가 너비에 포함되도록 설정 */
+        padding: 8px; /* 입력창 내부 여백 */
+      }
+
+      /* 마지막 '가입하기' 버튼 스타일 */
+      .box li:last-child {
+        justify-content: center; /* 버튼을 가운데 정렬 */
+      }
+
+      .box li input[type='submit'] {
+        width: 100%;
+        max-width: 200px;
+        padding: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="box">
+      <h1>예약 정보</h1>
+      <form action="">
+        <ul>
+          <li>
+            <label for="c-name">이 름</label>
+            <input type="text" id="c-name" />
+          </li>
+          <li>
+            <label for="c-phone">전 화</label>
+            <input type="tel" id="c-phone" />
+          </li>
+          <li>
+            <label for="c-mail">이메일</label>
+            <input type="email" id="c-mail" />
+          </li>
+          <li>
+            <input type="submit" value="가입하기" />
+          </li>
+        </ul>
+      </form>
+    </div>
+  </body>
+</html>
