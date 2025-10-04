@@ -331,6 +331,409 @@
 		</div>
       </div>
     </header>
-	
+	<!-- 공통::퀵메뉴 -->
+	<a href="/help/notice/265" class="floatingIcon">
+		<span class="blind">마헴베 프로젝트, 두 번째 이야기</span>
+	</a>
+	<!-- 공통::스크롤버튼 -->
+	<div class="btnScroll on">
+		<a href class="iconS up">
+			::before
+			<span class="blind">맨 위로 이동하기</span>
+		</a>
+		<a href class="iconS down">
+			::before
+			<span class="blind">맨 아래로 이동하기</span>
+			::after
+		</a>
+	</div>
+	<!-- //공통::스크롤버튼 -->
+	<div id="popJoin" class="popWrap popJoin">
+		<!-- 레이어팝업 공통 class="popWrap" -->
+		<div class="popInner">
+			<div class="popBox">
+				<h2 class="popHeader">회원가입방법</h2>
+				<div class="btnClose">
+					<a href class="popClose iconS">
+						<span class="blind">팝업 닫기</span>
+					</a>
+				</div>
+				<div class="popBody">
+					<!-- 회원가입 버튼 -->
+					<div class="btn">
+						<a href="/join/signUp" class="btnStyle-2">일반 회원가입</a>
+					</div>
+					<!-- //회원가입 버튼 -->
+					<!-- SNS 계정 회원가입 -->
+					<div class="loginSns">
+						<strong class="title">SNS 간편 가입</strong>
+						<ul class="snsList">
+							<li class="sns kakao">
+								<a href="/social/login/kakao" class="iconS">
+									<span class="blind">카카오로 회원가입하기</span>
+								</a>
+							</li>
+							<li class="sns naver">
+								<a href="/social/login/naver" class="iconS">
+									<span class="blind">네이버로 회원가입하기</span>
+								</a>
+							</li>
+							<!-- <li class="sns google"><a href="" class="iconS"><span class="blind">구글로 회원가입하기</span></a></li> -->
+							<li class="sns apple">
+								<a href="javascript:appleIDLogin()" class="iconS">
+									<span class="blind">애플로 회원가입하기</span>
+								</a>
+							</li>
+						</ul>
+					</div>
+					<!-- // SNS 계정 회원가입 -->
+					<!-- 도매 회원가입 버튼 -->
+					<!-- <div class="btn">
+                    <a href="" class="btnStyle-4">도매 회원가입</a>
+                	</div> -->
+					<!-- //도매 회원가입 버튼 -->
+					<div class="txtBottom">
+						<p class="linkText">이미 가입하셨나요?</p>
+						<a href="/login" class="btnLogin">로그인하기</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- 팝업::배송조회 -->
+	<div id="pipDeliveryTrace" class="popWrap popDeliveryTrace">
+		<div class="popInner"> </div>
+	</div>
+	<!-- //팝업::배송조회 -->
+	<script type="text/javascript">
+
+    var isLoading = false;
+    var page = 1;
+    $(function() {
+        $(window).scroll(function() {
+            if (!isLoading && ($(window).scrollTop() >= $(document).height() - $(window).height() - 150)) {
+                paging();
+            }
+        });
+
+        showPopup()
+    });
+
+    function paging() {
+        var totalPages = $("#totalPages").val();
+        var categoryId = $("#productListForm").find("input[name=categoryId]").val();
+        var rows = $("#productListForm").find("input[name=rows]").val();
+        if (!isLoading) {
+            if (++page <= totalPages) {
+                isLoading = true;
+                $.ajax({
+                    url : contextPath + "/product/list",
+                    type: "GET",
+                    dataType: "html",
+                    data: { page : page
+                        , categoryId : categoryId
+                        , rows: rows
+                    },
+                    success: function(html) {
+                        $(".listWrap").append(html);
+                        isLoading = false;
+                    }, 
+                    error: function() {
+                        isLoading = false;
+                    }
+                });
+            }
+        }
+    }
+
+    function showPopup() {
+        var popupCnt = 0;
+
+        if(popupCnt > 0){
+            cookiedata = document.cookie;
+            if (cookiedata.indexOf("marketMainPopup=done") < 0 ) {
+                $("#popMainFirst").show();
+            }
+        }
+    };
+	</script>
+	<script type="text/javascript"> </script>
+	<div id="wrap" class="subWrap productListWrap">
+		<!-- 서브 공통 class="subWrap" -->
+		<!-- 내용 -->
+		<div class="contents incCat">
+			<!-- 카테고리가 있는 경우 "incCat" -->
+			<!-- 카테고리 탭 -->
+			<div class="menuSlide">
+				<!-- depth1 -->
+				<div class="innerSlide">
+					<ul class="depth1">
+						<li>
+							<a href="/market/product/list?categoryId=502" data-category-id="502" data-category-nm="🎁선물세트" data-depth="2">
+                                <span>🎁선물세트</span>
+                            </a>
+						</li>
+						<li class="on">
+							<a href="/market/product/list?categoryId=5" data-category-id="5" data-category-nm="커피" data-depth="2">
+								<span>
+									"커피"
+									::after
+								</span>
+							</a>
+						</li>
+						<li>
+                            <a href="/market/product/list?categoryId=6" data-category-id="6" data-category-nm="푸드" data-depth="2">
+                                <span>푸드</span>
+                            </a>
+                        </li>						
+						<li>
+                            <a href="/market/product/list?categoryId=7" data-category-id="7" data-category-nm="굿즈" data-depth="2">
+                                <span>굿즈</span>
+                            </a>
+                        </li>
+						<li>
+                            <a href="/market/product/list?categoryId=8" data-category-id="8" data-category-nm="정기배송" data-depth="2">
+                                <span>정기배송</span>
+                            </a>
+                        </li>
+						<li>
+                            <a href="/market/product/list?categoryId=9" data-category-id="9" data-category-nm="플러스" data-depth="2">
+                                <span>플러스</span>
+                            </a>
+                        </li>
+						<li>
+                            <a href="/market/product/list?categoryId=486" data-category-id="486" data-category-nm="대량구매" data-depth="2">
+                                <span>대량구매</span>
+                            </a>
+                        </li>
+						::after
+					</ul>
+				</div>
+				<!-- //depth1 -->
+				<!-- 배너 -->
+				<div class="bannerArea">        
+                    <img src="https://renew.terarosa.com:9000/category/banner/5390eddb-76f4-47d8-950f-c9605c0d1e5a.png" alt="커피 배너">    
+                </div>
+				<!-- //배너 -->
+				<!-- depth2 -->
+				<ul class="depth2">
+					<li class="on">
+						<a href="/market/product/list?page=1&amp;categoryId=5&amp;isAll=true" data-category-id="" data-category-nm="" data-depth="">
+							전체보기
+						</a>
+					</li>
+					<li>
+						<a href="/market/product/list?page=1&amp;categoryId=10" data-category-id="10" data-category-nm="싱글오리진" data-depth="3">
+							싱글오리진
+						</a>
+					</li>
+					<!-- 활성화 class="on" -->
+					<li>
+						<a href="/market/product/list?page=1&amp;categoryId=11" data-category-id="11" data-category-nm="블렌드" data-depth="3">
+							블렌드
+						</a>
+					</li>
+					<!-- 활성화 class="on" -->
+					<li>
+						<a href="/market/product/list?page=1&amp;categoryId=12" data-category-id="12" data-category-nm="드립백" data-depth="3">
+							드립백
+						</a>
+					</li>
+					<li>
+						<a href="/market/product/list?page=1&amp;categoryId=484" data-category-id="484" data-category-nm="디카페인" data-depth="3">
+							디카페인
+						</a>
+					</li>
+					<li>
+						<a href="/market/product/list?page=1&amp;categoryId=406" data-category-id="406" data-category-nm="간편커피" data-depth="3">
+							간편커피
+						</a>
+					</li>
+				</ul>
+				<!-- //depth2 -->
+			</div>
+			<!-- //카테고리 탭 -->
+			<div class="innerContents">
+				<div class="mainSection">
+					<div class="listStyle">
+						<ul class="listWrap">
+							<script type="text/javascript">
+    							$(document).ready(function() {
+        							var totalPages = '1';
+        							var total = '38';
+        						$(".listCount").find("span > em").text(comma(total));
+        						$("#totalPages").val(totalPages);
+    							});
+							</script>
+							<li class="listSet swiper-slide" data-product-id="1202" data-price="33000" data-gtm-vis-first-on-screen186295514_115="141" data-gtm-vis-recent-on-screen186295514_115="1841182" data-gtm-vis-total-visible-time186295514_115="100" data-gtm-vis-has-fired186295514_115="1">
+								<!-- 썸네일 이미지 -->
+								<div class="imgArea">
+									<div class="thumbImg">
+										<img data-src="https://renew.terarosa.com:9000/product/1202/thumb/thumb_1202_ae6ad10a-2df6-457d-b8b1-5cccf7ad0da6.jpg" alt="[10월 King콩] 파나마 호세 썸네일 이미지" src="https://renew.terarosa.com:9000/product/1202/thumb/thumb_1202_ae6ad10a-2df6-457d-b8b1-5cccf7ad0da6.jpg">
+									</div>
+    							</div>
+								<!-- //썸네일 이미지 -->
+								<!-- 정보 -->
+								<div class="infoArea">
+									<strong class="title">[10월 King콩] 파나마 호세</strong>
+									<span class="enTitle">Panama Jose</span>
+									<span class="subScript">피칸의 고소한 풍미와<br>바닐라의 달콤한 향이 어우러진 커피<br><br>500g 33,000원 <font color="#C10F0F">(정상가 250g 26,000원)</font></span>
+									<span class="subScript">로스팅 2025.10.09</span>
+									<em class="price">33,000원</em>
+								</div>
+								<!-- //정보 -->
+								<a href="/market/product/detail/1202-1202?categoryId=5" class="btnViewDetail">
+									<span class="blind">상품 상세 보기</span>
+								</a>
+							</li>
+							<li class="listSet swiper-slide" data-product-id="1203" data-price="36000" data-gtm-vis-first-on-screen186295514_115="145">
+								<!-- 썸네일 이미지 -->
+								<div class="imgArea">
+									<div class="thumbImg"><img data-src="https://renew.terarosa.com:9000/product/1203/thumb/thumb_1203_b6139450-af41-4428-9717-d255e18be999.png" alt="[10월 S.O.S] 에티오피아 스페셜 썸네일 이미지" src="https://renew.terarosa.com:9000/product/1203/thumb/thumb_1203_b6139450-af41-4428-9717-d255e18be999.png"></div>
+    							</div>
+								<!-- //썸네일 이미지 -->
+								<!-- 정보 -->
+								<div class="infoArea">
+									<strong class="title">[10월 S.O.S] 에티오피아 스페셜</strong>
+									<span class="enTitle">[Single Origin Set] Ethiopia Special</span>
+									<span class="subScript">하나의 산지, 에티오피아 커피를<br>두 가지 지역으로 맛볼 수 있는<br>10월  Single Origin Set<br><br><b>Ethiopia Sidama Hamasho Washed </b><br>달콤한 복숭아 과즙과<br>꽃내음이 어우러진 화사한 커피<br><br><b>Ethiopia Yirgacheffe Gedeb Chelbesa</b><br>자두의 달콤 새콤한 풍미와<br>꽃내음이 어우러진 화사한 커피<br><br>300g(150g*2) 36,000원</span>			
+									<span class="subScript">로스팅 2025.10.09</span>
+									<em class="price">36,000원</em>
+								</div>
+								<!-- //정보 -->
+    							<a href="/market/product/detail/1203-1203?categoryId=5" class="btnViewDetail"><span class="blind">상품 상세 보기</span></a>
+							</li>
+							<!-- li.listSet.swiper-slide>(div.imgArea>div.thumbImg>img)+(div.infoArea>strong.title+span.enTitle+span.subScript+span.subScript+em.price)+a.btnViewDetail>span.blind -->
+							<li class="listSet swiper-slide">
+								<div class="imgArea">
+									<div class="thumbImg"><img src="" alt=""></div>
+								</div>
+								<div class="infoArea"><strong class="title"></strong><span class="enTitle"></span><span class="subScript"></span><span class="subScript"></span><em class="price"></em></div>
+								<a href="" class="btnViewDetail"><span class="blind"></span></a>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!-- // 내용 -->
+	</div>
+	<form id="productListForm">
+		<input type="hidden" id="totalPages" name="totalPages" value="1">
+		<input type="hidden" id="categoryId" name="categoryId" value="502">
+		<input type="hidden" id="rows" name="rows" value="50">
+	</form>
+	<footer class="footer">
+		<div class="footerInside fnb">
+			<ul class="fnbList">
+				<li class="fnbItem">
+					<a href="/contents/clause" class="">이용약관</a>
+				</li>
+				<li class="fnbItem">
+					<a href="/contents/infoPolicy" class=""><strong>개인정보처리방침</strong></a>
+				</li>
+				<li class="fnbItem">
+					<a href="/help/main" class="">고객센터</a>
+				</li>
+				<li class="fnbItem">
+					<a href="/store/list" class="">매장소개</a>
+				</li>
+			</ul>
+		</div>
+		<div class="footerInside">
+			<div class="footerBox">
+				<div class="footerCol contact">
+					<ul class="contactList">
+						<li class="item name"><em class="title">상호: </em>(주)학산</li>
+						<li class="item"><em class="title">대표이사: </em>김의열</li>
+						<li class="item"><em class="title">주소: </em>강원도 강릉시 구정면 현천길 25</li>
+						<li class="item"><em class="title">통신판매번호: </em>2003-강원강릉-0085</li>
+						<li class="item"><em class="title">사업자등록번호: </em>226-81-28273</li>
+						<li class="item link"><a href="#" onclick="window.open('http://www.ftc.go.kr/bizCommPop.do?wrkr_no=2268128273', 'bizCommPop', 'width=750, height=950;');return false;">사업자정보 확인</a></li>
+						<!-- <li class="item"><em class="title">계좌번호: </em>신한은행 100-025-724849 (주)학산</li> -->
+						<li class="item"><em class="title">개인정보보호책임자: </em>정성훈</li>
+					</ul>
+					<ul class="contactList">
+						<li class="item"><em class="title">원두도매문의: </em><a href="mailto:wholesale@terarosa.com">wholesale@terarosa.com</a></li>
+						<li class="item"><em class="title">매장이용문의: </em><a href="mailto:cafe@terarosa.com">cafe@terarosa.com</a></li>
+						<li class="item"><em class="title">홈페이지문의: </em><a href="mailto:shopping@terarosa.com">shopping@terarosa.com</a></li>
+						<li class="item"><em class="title">이메일: </em><a href="mailto:info@terarosa.com">info@terarosa.com</a></li>
+						<li class="item"><em class="title">고객센터: </em>1668-2764</li>
+					</ul>
+					<small class="copyright en">©2004 TERAROSA COFFEE. ALL RIGHT RESERVED.</small>
+					<ul class="snsList">
+						<li class="item insta"><a href="https://www.instagram.com/terarosacoffee/" target="_blank" rel="opener" class="iconS en">terarosacoffee</a></li>
+                        <li class="item youtube"><a href="https://www.youtube.com/channel/UCNt93R_0zMQ--T2Ah5MbnRw" target="_blank" rel="opener" class="iconS">테라로사</a></li>
+                        <li class="item kakao"><a href="https://pf.kakao.com/_fZBxes" target="_blank" rel="opener" class="iconS">테라로사</a></li>
+					</ul>
+				</div>
+				<div class="footerCol cs">
+					<strong class="boxTitle">고객센터 운영시간</strong>
+					<!-- <span class="tel">1668-2764</span> -->
+					<dl class="subInfo">
+						<dt class="blind">상담 시간</dt>
+						<dd>평일 09:00~18:00</dd>
+						<dd>점심 12:00~13:00</dd>
+						<dd>휴무 토/일/공휴일 휴무</dd>
+					</dl>
+				</div>
+				<div class="footerCol app">
+					<strong class="boxTitle">APP 다운</strong>
+                    <div class="qrcode">
+                        <span class="os">
+                            <span class="qr"><img src="/images/img/qr_and.png" alt="QR코드"></span>
+                            안드로이드
+                        </span>
+                        <span class="os">
+                            <span class="qr"><img src="/images/img/qr_ios.png" alt="QR코드"></span>
+                            iOS
+                        </span>
+                    </div>
+				</div>
+				<!-- <div class="footerCol bank">
+					<strong class="boxTitle">BANK INFO</strong>
+					<span class="account">신한은행 100-025-724849</span>
+					<dl class="subInfo">
+						<dt>예금주</dt>
+						<dd>(주)학산</dd>
+					</dl>
+				</div> -->
+			</div>
+		</div>
+	</footer>
+	<script type="text/javascript">
+		$(document).ready(function() {
+			
+		});
+
+
+		function openPopAddCart(productId, productPriceId) {
+
+			$("#popCart").show();
+
+			$.ajax({
+				url : contextPath + "/market/product/" + productId + "/" + productPriceId + "/cartOptionHtml.inc",
+				type: "POST",
+				data: { 
+					productId: productId
+				},
+				dataType: "html",
+				success: function(html) {
+					$("#popCart").html(html).show();
+				},
+				error: function() {
+				}
+			});
+		}
+
+		function closePopAddCart() {
+			$("#popCart").hide();
+		}
+	</script>
+	<div id="popCart" class="popWrap popCart"> </div>
+	<form id="marketOrderForm" action="/market/order/nomember/payment" method="post"></form>
+	<form id="storeOrderForm" action="/storeOrder/payment" method="post"></form>
+	<form id="giftOrderForm" action="/gift/order/payment" method="post"></form>
+	<form id="loginForm" action="/login" method="get"></form>
   </body>
 </html>
