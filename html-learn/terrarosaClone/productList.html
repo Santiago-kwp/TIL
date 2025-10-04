@@ -6,15 +6,331 @@
     <title>TERAROSA</title>
   </head>
   <body>
-    <header class="headerArea">
-      <div class="headerInner">
-        <!-- 타이틀 -->
-        <h1 class="headerTitle">
-          <a href="/main" class="logo">
-            <span class="blind">TERAROSA</span>
-          </a>
-        </h1>
+    <!-- 도매 "teraWholesale" -->
+    <!--  loading -->
+    <div class="loadingWrap">
+      <div class="loadingArea">
+        <span class="loader"></span>
+      </div>
+    </div>
+    <!-- // loading -->
+    <div id="popQuestion" class="popWrap popQna"> </div>
+    <!-- javascript가 들어감 : kwp -->
+    <script type="text/javascript">
+
+	var cookieArray = new Array();
+	var keywordCookieArray = new Array();
+	
+	$(function() {
+
+		$('#keyword2').on("keydown", function(e) {
+			if (e.keyCode == 13) {
+				searchKeyword();
+			}
+		});
+
+        $(".search.togAct").click(function() {
+            if ($("#recmdKeywordList").html() == '') {
+                $.ajax({
+                    url : contextPath + "/search/suggestKeyword.inc",
+                    type: "GET",
+                    dataType: "html",
+                    success: function(html) {
+                        $("#recmdKeywordList").html(html);
+                    }, 
+                    error: function() {
+                    }
+                });
+            }
+        });
+
+		/* getRecmdKeywordList(); */
+
+
+	});
+
+	function removeCookie(name){
+        var todayDate = new Date(); 
+        todayDate.setDate( todayDate.getDate() - 1 );
+        document.cookie = name + "=" + escape( '' ) + "; path=/; expires=" + todayDate.toGMTString() + ";";
+    }
+
+	function quickMenuContentSetting(){
+		var str = "";
+		for(var i = 0; i < cookieArray.length ; i++){
+			var productInfo = unescape(cookieArray[i]).split("|");
+			str += '<li class="thumb">';
+			str += '<a href="/market/product/detail/' + productInfo[0]+'">';
+			str += '<img src="' + productInfo[1] +'" alt="상품이미지" />';
+			str += '<span class="blind">상품 상세 보기</span>';
+			str += '</a>';
+			str += '</li>';
+		}
+		$("#quickMenuContent").html(str);
+	}
+
+	function keywordCookieContentSetting() {
+		var str = "";
+		if(keywordCookieArray.length > 0) {
+			for(var i= 0; i < keywordCookieArray.length; i++){
+				var keywordInfo = unescape(keywordCookieArray[i]).split("|");
+				str += '<li class="kwd">' 
+					+ '<a href="'+ contextPath +'/product/search?keyword='+ keywordInfo[1] +'&sort=priority&direction=desc&rows=60" class="word">' + keywordInfo[1] +'</a>'
+					+ '<button class="iconS del" onclick="javascript:keywordCookieRemove(' + i + ')"><span class="blind btn_del">검색어 삭제</span></button>'
+					+ '</li>';
+			}
+			//$("#keywordHistoryNone").remove();
+		}
+		$("#keywordHistoryContent").html(str);
+	}
+
+	function keywordCookieRemoveAll() {
+		if(keywordCookieArray.length > 0) {
+			for(var i = keywordCookieArray.length -1; i >= 0; i--){
+				 keywordCookieRemove(i);
+			}
+			location.reload();
+		}
+	}
+
+	function keywordCookieRemove(index){
+		//cookieArray[i] 제거
+		if(keywordCookieArray[index]) {
+			var keywordInfo = keywordCookieArray[index].split("|");
+			keywordCookieArray.splice(index, 1);
+			
+			// cookie 삭제
+			var todayDate = new Date(); 
+		    todayDate.setDate( todayDate.getDate() - 1 );
+		    document.cookie = keywordInfo[0] + "=" + escape( '' ) + "; path=/; expires=" + todayDate.toGMTString() + ";";
+		}
+		
+		// 화면 재 설정
+	    keywordCookieContentSetting();
+	}
+
+	function searchKeyword(id) {
+		var keyword = id ? $.trim($("#" + id).val()) : $.trim($("#keyword2").val());
+		addKeywordCookie(keyword);
+		addSearchKeywordHistory();
+		$("#keyword2").val("");
+		location.href = contextPath +'/product/search?keyword='+ keyword +'&sort=priority&direction=desc&rows=60';
+	}
+
+	function addKeywordCookie(keyword) {
+		//검색어 쿠키 설정
+		var d = new Date();
+		var cookieVal = escape( keyword );
+		var name = "keywordSearchProduct" + new Date().getTime();
+		var todayDate = new Date(); 
+		todayDate.setDate( todayDate.getDate() + 14 ); // 14일
+
+		if (document.cookie && document.cookie != '') {
+			var cookies = document.cookie.split(';');
+			for(var i = 0; i < cookies.length; i++) {
+				var cookie = $.trim(cookies[i]);
+
+				if(cookie.indexOf("keywordSearchProduct") >= 0) {
+					var cName = cookie.substring(0, cookie.indexOf("="));
+					var cValue = cookie.substring(cookie.indexOf("=") + 1);
+
+					// 동일어가 있을 경우 기존 키워드 삭제
+					if(cookieVal == cValue) {
+						removeCookie(cName);
+						break;
+					}
+				}
+			}
+		}
+
+		// cookie 추가
+		document.cookie = name + "=" + cookieVal + "; path=/; expires=" + todayDate.toGMTString() + ";";
+	}
+
+	function addSearchKeywordHistory() {
+		
+	}
+
+
+	function getRecmdKeywordList() {
+		$.ajax({
+    		url : contextPath + "/search/recmdKeywordListHtml.inc",
+    		type: "GET",
+    		dataType: "html",
+    		success: function(html) {
+    			$("#recmdKeywordList").append(html);
+    		}, 
+    		error: function() {
+			}
+    	});
+	}
+
+    </script>
+	<div id="skip_nav">
+		<a href="#wrap">본문 바로가기</a>
+	</div>
+    <header class="header" style="height: 135px;">
+      <div class="headerArea">
+		<div class="headerInside menu">
+			<div class="inner">
+				<ul class="personalMenu">
+					<li class="pm">
+						<a href="/login">로그인</a>
+					</li>
+					<li class="pm">
+						<!-- 가상 요소(Virtual element)는 HTML 문서 트리(DOM)에는 실제로 존재하지 않지만 CSS를 사용하여 스타일을 적용할 수 있는 요소 : kwp-->
+						::before
+						<a href="#popJoin" class="popOpen">회원가입</a>
+					</li>
+					<li class="pm">
+						::before
+						<a href="/myPage/orderList">주문확인</a>
+					</li>
+					<li class="pm">
+						::before
+						<a href="/myPage/main">마이페이지</a>
+					</li>
+					<li class="pm">
+						::before
+						<a href="/help/main">고객센터</a>
+					</li>
+					<!-- <li class="pm wholesale"><a href="/contents/wholeSale">테라 도매몰</a></li> -->
+				</ul>
+			</div>
+		</div>
+		<div id="gnb" class="headeInside gnb">
+			<div class="inner">
+				<h1 class="logo">
+					<a href="/main">
+						<span class="blind">TERRAROSA</span>
+						::after
+					</a>
+				</h1>
+				<ul class="gnbList">
+					<!-- 마켓 -->
+					<li class="depth1 on">
+						<!-- 평상시 SHOP URL -->
+						<a href="/market/product/list?categoryId=502">
+							<span class="eng">SHOP</span>
+							<span class="kor">쇼핑</span>
+						</a>
+					</li>
+					<li class="depth1">
+						<a href="/market/product/list?categoryId=8">
+							<span class="eng">SUBSCRIPTION</span>
+							<span class="kor">정기배송</span>
+						</a>
+					</li>
+					<li class="depth1">
+						<a href="/contents/teraTimes/main">
+							<span class="eng">LIBRARY</span>
+							<span class="kor">라이브러리</span>
+						</a>
+					</li>
+					<li class="depth1">
+						<a href="/contents/wholeSale">
+							<span class="eng">WHOLESALE</span>
+							<span class="kor">도매</span>
+						</a>
+					</li>
+					<li class="depth1">
+						<a href="/contents/about">
+							<span class="eng">ABOUT</span>
+							<span class="kor">소개</span>
+						</a>
+					</li>
+					<!-- // 마켓 -->
+				</ul>
+				<ul class="utilList">
+					<li class="depth1 search togAct">
+						<a href class="iconS togBtn">
+							::before
+							<span class="blind">검색하기</span>
+						</a>
+						<!-- 검색공통 -->
+						<div class="serachSlide">
+							<strong class="blind">검색어 입력 영역</strong>
+							<!-- 검색어 -->
+							<div class="searchKwd">
+								<div class="entry">
+									<input type="text" class="ip_kwd" id="keyword2" placeholder="검색어를 입력하세요.">
+									<a href="#;" onclick="javascript:searchKeyword()" class="btnSearch iconS">
+										::before
+										<span class="blind">검색하기</span>
+									</a>
+								</div>
+							</div>
+							<!-- 검색어 -->
+							<!-- 최근 검색어 -->
+							<div class="searchSection recent">
+								<strong class="title">최근 검색어</strong>
+								<!-- 최근 검색어 없는 경우 -->
+								<p class="noSearch" style="display: none">최근 검색어가 없습니다.</p>
+								<!-- // 최근 검색어 없는 경우 -->
+								<ul class="kwdList" id="keywordHistoryContent"> </ul>
+								<a href="#;" onclick="javascript:keywordCookieRemoveAll()" class="btnAllDel">전체삭제</a>
+							</div>
+							<!-- //최근 검색어 -->
+							<!-- 추천 검색어 -->
+							<div class="searchSection popular">
+								<strong class="title">추천 검색어</strong>
+								<ol class="kwdList" id="recmdKeywordList">
+									<li class="kwd">
+										<a href="/product/search?keyword=King콩" class="word">
+											<em class="num"></em>
+											"King콩"
+										</a>
+									</li>
+									<li class="kwd">
+										<a href="/product/search?keyword=하우스" class="word">
+											<em class="num"></em>
+											"하우스"
+										</a>
+									</li>
+									<li class="kwd">
+										<a href="/product/search?keyword=초콜릿" class="word">
+											<em class="num"></em>
+											"초콜릿"
+										</a>
+									</li>
+									<li class="kwd">
+										<a href="/product/search?keyword=드립백" class="word">
+											<em class="num"></em>
+											"드립백"
+										</a>
+									</li>
+									<li class="kwd">
+										<a href="/product/search?keyword=디카페인" class="word">
+											<em class="num"></em>
+											"디카페인 "
+										</a>
+									</li>
+								</ol>
+								::after
+							</div>
+							<!-- //추천 검색어 -->
+							<a href class="btnDel iconS togBtn">
+								::before
+								<span class="blind">검색 영역 닫기</span>
+							</a>
+						</div>
+						<!-- //검색공통 -->
+					</li>
+					<li class="depth1 cart">
+						<a href="/market/cart/list" class="iconS">
+							::before
+							<span class="blind">장바구니</span>
+							<em class="count" id="cartCnt">
+								"0"
+								<span class="blined">개</span>
+							</em>
+						</a>
+					</li>
+				</ul>
+			</div>
+		</div>
       </div>
     </header>
+	
   </body>
 </html>
