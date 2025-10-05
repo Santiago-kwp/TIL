@@ -1,0 +1,41 @@
+    a {
+      text-decoration: none;
+      color: #222;
+    }
+    #travel {
+      width: 1200px;
+      margin: 0 auto;
+    }
+    .title-text {
+      text-align: center;
+    }
+    .title-text > h2 {
+      font-size: 2.5em;
+      color: #919191;
+    }
+    .title-text > p {
+      font-size: 1.2em;
+      color: #ccc;
+    }
+    .travel-list {
+      padding-top: 20px;      
+    }    
+    .travel-card img {
+      width: 150px;
+      height: 150px;
+      margin: 15px;
+      border-radius: 50%;
+    }
+    .travel-card p {
+      font-size: 16px;
+    }
+    .travel-card {
+      float: left;
+      margin-right: 20px;
+      width: 250px;
+      height: 340px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 20px;
+      text-align: center;
+    }

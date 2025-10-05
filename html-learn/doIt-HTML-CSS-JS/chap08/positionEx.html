@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        #pos1 {
+            position: absolute;
+            left: 50px;
+            top: 50px;
+        }
+
+        #pos2 {
+            position: absolute;
+            right: 100px;
+            top: 100px;
+
+        }
+
+        #pos3 {
+            position: absolute;
+            left: 100px;
+            bottom: 100px;
+        }
+        /* position: static => 문서의 흐름에 맞춰 배치합니다. 기본값입니다. */
+        #static { position: static; }
+        /* position: relative => 위치값을 지정할 수 있다는 점을 제외하면 static과 같음 */
+        #relative-1 { position: relative; }
+        #relative-2 {
+            position: relative;
+            left: 100px; /* 왼쪽에서 100px 떨어지게 */
+            top: -50px;  /* 위쪽에서 -50px 떨어지게 (즉, 위로 이동) */
+        }
+        /* position: fixed => 브라우저 창을 기준으로 위치를 지정해 배치 */
+        #fixed {
+            width: 100px;
+            height: 100px;
+            background-color: #222;
+            position: fixed;
+            right: 30px;
+            top: 30px;
+        }
+
+    </style>
+</head>
+<body>
+    
+    <!-- <p id="pos1">Voluptate ut in do qui do magna nisi exercitation. Qui culpa dolor deserunt culpa do ad sunt nisi. Nulla ad proident labore laborum voluptate sint amet et occaecat aliquip. Commodo aliquip amet ut adipisicing duis enim commodo in labore commodo ea. Consectetur occaecat qui Lorem ad ipsum quis. Aute minim cupidatat sit esse reprehenderit labore aute cillum. Nulla fugiat dolore aute non laboris qui incididunt consequat anim officia veniam pariatur proident deserunt.</p>
+    <p id="pos2">Veniam ipsum commodo magna nisi veniam cupidatat amet ut. Id dolore sint dolore ullamco est esse elit. Excepteur ullamco fugiat aliquip eu enim in ex Lorem irure non ipsum enim. Magna ut commodo consectetur dolor. Fugiat eiusmod ea sunt tempor.</p>
+    <p id="pos3">Aliquip ad ea pariatur enim dolor do adipisicing irure Lorem ea non non. Est ad enim enim nostrud voluptate cillum magna quis anim. Tempor dolor anim consequat sit eiusmod Lorem consequat veniam ut proident reprehenderit reprehenderit magna qui.</p> -->
+
+    <p id="static">Quis sit anim est consectetur sit sint sunt aute esse elit. Elit est enim eu aute occaecat aute ut. Incididunt ex sunt velit pariatur id commodo et aliqua cupidatat sunt elit. Deserunt id elit eu dolore in amet consectetur aliqua ut Lorem mollit. Sunt incididunt do id laborum adipisicing laborum eiusmod reprehenderit reprehenderit laborum.</p>
+    <p id="relative-1">Labore eiusmod occaecat labore amet amet aute do sit elit deserunt do non. Nisi do nulla sunt veniam et dolor proident in fugiat mollit in. Lorem in incididunt excepteur et eiusmod occaecat eu aliqua officia enim. Id nisi ut laboris excepteur et dolor commodo dolor laborum.</p>
+    <p id="relative-2">Sint sint eiusmod minim enim fugiat tempor adipisicing dolor fugiat esse velit voluptate magna. Et ut laboris labore pariatur tempor dolor ea ad proident id. Laboris non nisi et incididunt in ad non eu.</p>
+        <p id="fixed"></p>
+</body>
+</html>
