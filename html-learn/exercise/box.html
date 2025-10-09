@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        /* 기본 스타일 */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            }
+        
+        #container {
+            border: 1px solid black;
+            width: 600px;
+            height: 600px;
+            margin: 0 auto; /* 중앙 정렬 */
+            /* 1. 내부 요소를 수직(h1, hr, content-wrapper)으로 배열 */
+            display: flex; 
+            flex-direction: column; 
+        }
+        /* 1. section과 main을 묶는 컨테이너에 Flexbox 적용 */
+        /* 수평 배열 컨테이너: 남은 공간을 모두 차지하도록 설정 */
+        #content-wrapper {
+            /* 2. #container 내부의 남은 수직 공간을 모두 차지하도록 확장 */
+            flex-grow: 1; 
+            
+            /* 3. 내부 요소(section, main)를 수평으로 배열 */
+            display: flex;
+            /* 참고: flex-direction: row; 는 기본값이므로 생략 가능 */
+        }
+        /* 2. section과 main의 너비 비율 설정 */
+        /* flex: 1은 남은 공간을 균등하게 나눠 가지라는 의미 */
+        #content-wrapper section {
+            flex: 1; 
+            padding-right: 20px; /* 구분선과 내용 사이 간격 */
+        }
+
+        /* 3. 구분선 추가 (가장 일반적인 방법: section 또는 main에 border 사용) */
+        #content-wrapper main {
+            flex: 2; /* main에 section보다 더 많은 공간 할당 (예: 2배) */
+
+            /* main의 왼쪽에 얇은 실선(solid) 구분선 추가 */
+            border-left: 1px solid #ccc; 
+            padding-left: 20px; /* border와 내용 사이 간격 유지 */
+        }
+
+        h1 {
+            color: skyblue;
+            font-size: 50px;
+            margin: 10px 0 0 10px;
+        }
+
+        hr {
+            margin: 0 5px;
+            background-color: black; /* The color of the line */
+            width: 580px; /* Adjust as needed */
+            height: 0.5px; /* The thickness of the line */
+            display: inline-block;
+        }
+        
+        
+        
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>WEB</h1>
+        <hr>
+        <div id="content-wrapper">
+            <section>
+                <ul>
+                    <li>HTML</li>
+                    <li>CSS</li>
+                    <li>JavaScript</li>
+                </ul>
+            </section>
+            <main>
+                <h3>HTML</h3>
+                <p>HTML is Hypertext Markup Languages...</p>
+            </main>
+        </div>
+        
+    </div>
+</body>
+</html>
