@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      body {
+        margin: 0; /* 화면 전체를 꽉 채움 */
+      }
+      h1 {
+        text-align: center;
+        font-size: 45px;
+        border-bottom: 1px solid gray;
+        margin: 0;
+        padding: 20px;
+      }
+      ol {
+        border-right: 1px solid gray;
+        width: 100px; /* block이므로 크기를 지정하면 줄어들음 */
+        margin: 0; /* 가로 마진을 없애서 공간을 확보한다.*/
+        padding: 20px; /* 너무 붙지 않도록 */
+      }
+      #grid {
+        display: grid;
+        grid-template-columns: 150px 1fr;
+      }
+      #grid ol {
+        /* 조상이 grid인 태그의 ol */
+        padding-left: 33px;
+      }
+      #grid #article {
+        padding-left: 25px;
+      }
+      @media (max-width: 800px) {
+        #grid {
+          /* 800px 이하면 블럭요소로 바뀐다. */
+          display: block;
+          ol { /* 오른쪽 테두리 라인 제거 */
+            border-right: none;
+          }
+        }
+        h1 { /* h1 아래 라인 제거 */
+          border-bottom: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>WEB</h1>
+    <div id="grid">
+      <ol>
+        <li>HTML</li>
+        <li>CSS</li>
+        <li>JavaScript</li>
+      </ol>
+
+      <div id="article">
+        <h3>HTML</h3>
+        <p>
+          HTML is Hypertext Markup Languages... Lorem ipsum dolor sit amet
+          consectetur adipisicing elit. Eum, eveniet soluta numquam ipsam
+          perspiciatis iste quo? Quia numquam aut, dolor asperiores officia
+          blanditiis. Perspiciatis temporibus exercitationem nisi velit impedit
+          ab!
+        </p>
+      </div>
+    </div>
+  </body>
+</html>
