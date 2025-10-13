@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Flex Box Layout</title>
+    <style>
+      .pic img {
+        width: 100%; /* 이미지가 .pic 에 가득차도록 */
+        height: auto; /* 이미지의 비율을 유지 */
+      }
+
+      /* 이미지 스타일링 */
+      .container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-around; /* 항목들을 여백을 포함하여 균등하게 배치 */
+        gap: 5px;
+      }
+
+      .pic {
+        flex-basis: 32%; /* 기본적으로 한 줄에 3개 항목 표시 */
+      }
+
+      /* 뷰포트 너비가 768px 이하일 때 한 줄에 1개 항목 표시 */
+      @media (max-width: 768px) {
+        .pic {
+          flex-basis: 100%;
+        }
+      }
+
+      /* 뷰포트 너비가 769px ~ 1024px 이면 한 줄에 2개 항목 표시 */
+      @media (min-width: 769px) and (max-width: 1024px) {
+        .pic {
+          flex-basis: 49%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="pic">
+        <img src="images/kitten-1.jpg" alt="아기 고양이 사진" />
+      </div>
+      <div class="pic">
+        <img src="images/kitten-2.jpg" alt="아기 고양이 사진" />
+      </div>
+      <div class="pic">
+        <img src="images/kitten-3.jpg" alt="아기 고양이 사진" />
+      </div>
+    </div>
+  </body>
+</html>
