@@ -1,0 +1,33 @@
+/* 웹페이지 폰트 지정 : import는 반드시 최상단에 위치 */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined');
+@import url('https://fonts.googleapis.com/css2?family=Material+Icons');
+@import './reset.css';
+@import './variable.css';
+
+body {
+  font-family: 'Roboto', sans-serif;
+  background-color: var(--background-purple);
+  color: white;
+}
+
+* {
+  /* 모든 요소를 화면 안에 포함하여 렌더링하겠다. */
+  box-sizing: border-box;
+}
+
+input {
+  border: none;
+  outline: none;
+  appearance: none;
+}
+
+.display-flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.display-relative {
+  position: relative;
+}

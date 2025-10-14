@@ -1,0 +1,7 @@
+/* :root -> html 문서 어디에서나 사용자 지정 속성에 접근할 수 있도록 구성 */
+:root {
+  --purple: #6644b8;
+  --darkpurple: #37274b;
+  --background-purple: #120522;
+  --border: rgba(255, 255, 255, 0.5);
+}

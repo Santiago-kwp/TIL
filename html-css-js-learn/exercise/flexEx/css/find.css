@@ -1,0 +1,37 @@
+@import './global.css';
+
+/*
+1. 검색바의 간격을 조절
+2. 검색바를 스타일링
+3. 검색바 클릭시 애니메이션
+4. 검색바 아이콘의 위치, 크기를 조정
+*/
+
+.find-search-bar-form {
+  padding: 0 25px;
+}
+
+.find-search-bar-form div {
+  width: 100%;
+}
+
+.find-search__bar {
+  margin-top: 50px;
+  background-color: var(--darkpurple);
+  border-radius: 1rem;
+  width: 100%;
+  padding: 10px;
+  color: white;
+  transition: background-color 0.3s ease-in-out;
+}
+
+.find-search__bar:focus {
+  background-color: var(--purple);
+}
+
+.find-search-bar-form span {
+  position: absolute;
+  font: 1rem;
+  bottom: 0.55rem;
+  right: 25px;
+}
