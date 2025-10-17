@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DOM event 객체</title>
+  </head>
+  <body>
+    <div class="container">
+      <img src="images/kitty-1.png" id="cat" />
+    </div>
+
+    <script>
+      let cat = document.querySelector('#cat');
+
+      cat.addEventListener('mouseover', () => {
+        cat.src = 'images/kitty-2.png';
+      });
+      cat.addEventListener('mouseout', () => {
+        cat.src = 'images/kitty-1.png';
+      });
+    </script>
+  </body>
+</html>

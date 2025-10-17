@@ -1,0 +1,16 @@
+DOM API 종류
+ - 여러개의 문서객체를 선택할 때 사용하는 메소드
+ document.querySelectorAll('선택자');
+ document.querySelector('선택자');
+ document.getElementById('id명');
+
+
+ innerHTML=> 문서 객체 내부의 문자를 조작할 때 사용하는 속성
+
+ 
+ 4. html이 있는 h1이 가지고 있는 텍스트
+ 
+출력시 : 
+
+변경전 : Header1
+변경후 : From Javascript

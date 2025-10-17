@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DOM event 객체</title>
+  </head>
+  <body>
+    <div class="container">
+      <img src="images/kitty-1.png" id="cat" />
+    </div>
+
+    <script>
+      let cat = document.querySelector('#cat');
+
+      cat.addEventListener('mouseover', changePic, false);
+      cat.addEventListener('mouseout', originPic, false);
+
+      function changePic() {
+        cat.src = 'images/kitty-2.png';
+      }
+
+      function originPic() {
+        cat.src = 'images/kitty-1.png';
+      }
+    </script>
+  </body>
+</html>

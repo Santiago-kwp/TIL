@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DOM event 객체</title>
+    <style>
+      .container {
+        width: 100vw;
+        height: 100vh;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      /* 추가적으로, body와 html에도 스타일을 적용하여 기본 여백을 제거해야 함 */
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden; /* 스크롤바가 생기는 것을 방지 (선택 사항) */
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container"></div>
+
+    <script>
+      let container = document.querySelector('.container');
+      container.onclick = (event) => {
+        alert(`이벤트 발생 위치: ${event.pageX}, ${event.pageY}`);
+      };
+    </script>
+  </body>
+</html>

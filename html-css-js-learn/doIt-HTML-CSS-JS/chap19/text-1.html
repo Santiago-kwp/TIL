@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="detail">
+      <ul>
+        <li>원산지 : 에디오피아</li>
+        <li style="display: none">지 역 : 이르가체프 코체레</li>
+        <li style="display: none">농 장 : 게뎁</li>
+      </ul>
+    </div>
+
+    <script>
+      let detail = document.querySelector('#detail > ul');
+      console.log(detail.innerText); // 웹 브라우저 창에 보이는 내용만 가져오기
+      console.log(detail.innerHTML); // 웹 브라우저 창에 표시되지 않는 내용 모두 가져오기 + 태그까지 함께 가져오기
+      console.log(detail.textContent); // 웹 브라우저 창에 표시되지 않는 내용 모두 가져오기
+    </script>
+  </body>
+</html>
