@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>연습문제 2</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      #container {
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+      input[type="number"],
+      input[type="submit"] {
+        width: 100px;
+        height: 40px;
+        font-size: 20px;
+        padding: 8px;
+        margin: 1rem;
+        box-sizing: border-box;
+      }
+      table {
+        border-collapse: collapse; /* 셀 경계선 겹침 제거 */
+        max-width: 600px;
+        font-family: "Arial", sans-serif;
+        font-size: 16px;
+        overflow: auto; /* 너무 커지면 스크롤 */
+        display: block; /* 스크롤 작동 */
+      }
+      th,
+      td {
+        border: 1px solid #ccc;
+        padding: 12px;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container">
+      <form action="">
+        <input type="number" id="row" required min="1" max="20" />
+        <label for="row">행</label>
+        <input type="number" id="column" required min="1" max="20" />
+        <label for="column">열</label>
+        <input type="submit" id="submit" value="작성" />
+        <p id="message" style="color: red; text-align: center"></p>
+      </form>
+    </div>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const submit = document.querySelector("#submit"); // 작성 요소 가져오기
+        submit.addEventListener("click", function (event) {
+          event.preventDefault(); // 기본 동작을 막음 => form 태그의 역할인 서버로 데이터를 보내는 작업을 막음
+          // 사용자가 입력한 행과 열을 값을 받아옴
+          const row = parseInt(document.querySelector("#row").value);
+          const col = parseInt(document.querySelector("#column").value);
+          const message = document.querySelector("#message");
+
+          if (
+            isNaN(row) ||
+            isNaN(col) ||
+            row < 1 ||
+            row > 20 ||
+            col < 1 ||
+            col > 20
+          ) {
+            message.textContent = "행과 열은 1~20 사이의 숫자로 입력해주세요.";
+            return;
+          }
+
+          message.textContent = ""; // 메시지 초기화
+
+          // 버튼을 클릭하면 실행
+          createTable(row, col); // 표를 만드는 함수 호출
+        });
+
+        function createTable(r, c) {
+          const container = document.querySelector("#container");
+          // 기존 테이블이 있다면 제거
+          const oldTable = container.querySelector("table");
+          if (oldTable) {
+            container.removeChild(oldTable);
+          }
+          // table 요소 노드를 만듭니다.
+          const table = document.createElement("table");
+          // 입력한 행의 개수만큼 반복하면서 tr 요소 노드를 만듭니다.
+          for (let i = 0; i < r; i++) {
+            const tr = document.createElement("tr");
+            // 입력한 열의 개수만큼 다음 과정을 반복합니다.
+            for (let j = 0; j < c; j++) {
+              // td 요소를 만듭니다.
+              const td = document.createElement("td");
+              // 텍스트 노드를 만듭니다.
+              const text = document.createElement("span");
+              text.textContent = `${i}, ${j}`;
+              // 텍스트 노드를 td 요소의 자식 노드로 만듭니다.
+              td.appendChild(text);
+              // td 요소를 tr 요소 노드의 자식 노드로 만듭니다.
+              tr.appendChild(td);
+              // tr 요소를 table 요소의 자식 노드로 만듭니다.
+              table.appendChild(tr);
+            }
+          }
+
+          // table 요소 노드를 필요한 위치에 추가합니다.
+          container.appendChild(table);
+        }
+      });
+    </script>
+  </body>
+</html>

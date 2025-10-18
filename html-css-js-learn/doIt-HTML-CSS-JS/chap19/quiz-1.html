@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>연습문제 1</title>
+    <style>
+      ul {
+        list-style: none;
+      }
+      li {
+        font-size: 20px;
+        line-height: 35px;
+      }
+      .check {
+        color: #999;
+        font-size: 20px;
+        margin-right: 25px;
+      }
+      .check:hover {
+        color: #222;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>할 일 목록</h1>
+    <ul>
+      <li><span class="check">&check;</span>할 일 1</li>
+      <li><span class="check">&check;</span>할 일 2</li>
+      <li><span class="check">&check;</span>할 일 3</li>
+      <li><span class="check">&check;</span>할 일 4</li>
+      <li><span class="check">&check;</span>할 일 5</li>
+    </ul>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // 체크 표시 부분을 가져와 노드 리스트를 만듭니다. 여기서에서는 <span class="check"> 요소를 이용합니다.
+        const checkList = document.querySelectorAll(".check");
+        // 노드 리스트에 있는 요소 전체를 반복하면서 click 이벤트가 발생하면 실행할 함수를 연결합니다.
+        for (const check of checkList) {
+          check.addEventListener("click", function () {
+            // 체크 노드의 스타일을 변경
+            check.style.color = "#ccc";
+            // 노드의 부모 노드 스타일을 변경
+            check.parentNode.style.color = "#ccc";
+            check.parentNode.style.textDecoration = "line-through";
+          });
+        }
+      });
+    </script>
+  </body>
+</html>
