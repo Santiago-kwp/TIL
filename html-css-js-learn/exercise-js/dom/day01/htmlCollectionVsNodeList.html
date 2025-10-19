@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <ul id="list">
+      <li>Item 1</li>
+      <li>Item 2</li>
+    </ul>
+    <button id="add">Add Item</button>
+    <script>
+      // HTMLCollection: Live
+      const liveList = document
+        .getElementById("list")
+        .getElementsByTagName("li");
+
+      // NodeList: Static
+      const staticList = document.querySelectorAll("#list li");
+
+      document.getElementById("add").addEventListener("click", () => {
+        const newItem = document.createElement("li");
+        newItem.textContent = "New Item";
+        document.getElementById("list").appendChild(newItem);
+
+        console.log("HTMLCollection length:", liveList.length); // 업데이트됨 => 버튼을 누를 때마다 1씩 증가 (ex. 3->4->5...)
+        console.log("NodeList length:", staticList.length); // 업데이트 안됨 => 버튼을 눌러도 1로 고정됨. (ex. 2->2->2)
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      .apple {
+        color: red;
+      }
+
+      .orange {
+        color: orange;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container">
+      <h1 class="apple">Mac</h1>
+      <h1 class="apple">IPhone</h1>
+      <h1 class="apple">Ipad</h1>
+    </div>
+    <button id="btn">색변경</button>
+    <script>
+      //   const names = document.getElementsByTagName("h1"); // 전체 색깔 토글됨
+      //   const names = document.getElementsByClassName("apple");
+      const names = document.getElementById("container").children;
+
+      const btn = document.getElementById("btn");
+      btn.addEventListener("click", () => {
+        for (let i = 0; i < names.length; i++) {
+          names[i].classList.toggle("orange");
+        }
+      });
+
+      document.addEventListener("DOMContentLoaded", function () {
+        // const names = document.getElementsByTagName("h1"); // 전체 색깔 바뀜
+        // const names = document.getElementsByClassName("apple"); // 첫 번째와 세 번째만 바뀜
+        const names = document.getElementById("container").children; // 전체 색깔 바뀜
+
+        for (let i = 0; i < names.length; i++) {
+          console.log("here ext");
+          names[i].className = "orange";
+        }
+      });
+    </script>
+  </body>
+</html>
