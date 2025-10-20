@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script>
+      let g = 0;
+
+      // setTimeout 비동기 함수의 콜백 함수에서 전역 변수 g의 값이 변경되길 기대
+      // 실제로는 변수 g의 값은 변경되지 않는다.
+      // setTimeout 의 콜백함수가 콜 스택으로 이동해서 실행되는 시점에는 이미 console.log 함수가 끝난 시점이기 때문
+      setTimeout(() => {
+        g = 100;
+      }, 0);
+
+      console.log(g); // 0
+
+      // GET 요청을 위한 비동기 함수
+      // 요청 결과에 따라 수행할 성공,실패 콜백 함수 전달
+      const get = (url, successCallback, failureCallback) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', url); // 초기화
+        xhr.send();
+
+        xhr.onload = () => {
+          if (xhr.status === 200) {
+            successCallback(JSON.parse(xhr.response));
+          } else {
+            failureCallback(xhr.status);
+          }
+        };
+      };
+
+      get(
+        'https://jsonplaceholder.typicode.com/posts/1000',
+        console.log,
+        console.error
+      );
+      // {
+      //   userId: 1,
+      //   id: 1,
+      //   title: 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
+      //   body: 'quia et suscipit\nsuscipit recusandae consequuntur …strum rerum est autem sunt rem eveniet architecto'
+      // };
+
+      try {
+        setTimeout(() => {
+          throw new Error('Error!');
+        }, 1000);
+      } catch (error) {
+        // 이벤트 큐에서 콜 스택으로 setTimeout 의 콜백 함수로 이동되어 실행되는 시점에서 setTimout 함수는 이미, 콜 스택에서 pop된 상태이고 주체가 아니다.
+        // 콜백 함수의 호출자(caller)가 setTimeout 인데, 에러 발생 시점에 존재하지 않기 때문에 Error 를 캐치할 수 없다.
+        console.error('캐치 에러 :', error);
+      }
+    </script>
+  </body>
+</html>

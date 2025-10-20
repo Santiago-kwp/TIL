@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script>
+      const obj = {
+        name: 'Kiwoong',
+        age: 30,
+        alive: true,
+        hobby: ['programming', 'climbing'],
+      };
+
+      // 객체 -> JSON (serializing)
+      const json = JSON.stringify(obj);
+      console.log(json);
+      // {"name":"Kiwoong","age":30,"alive":true,"hobby":["programming","climbing"]}
+
+      const parsed1 = JSON.parse(json);
+      console.log(typeof parsed1, parsed1);
+
+      // 2칸 들여쓰기
+      const prettyJSON = JSON.stringify(obj, null, 2);
+      console.log(typeof prettyJSON, prettyJSON);
+      // string {
+      //   "name": "Kiwoong",
+      //   "age": 30,
+      //   "alive": true,
+      //   "hobby": [
+      //     "programming",
+      //     "climbing"
+      //   ]
+      // }
+      // JSON.stringify(obj, replacer, space) 에서 replacer 메서드 정의
+      function filter(key, value) {
+        // undefined 는 반환 X
+        return typeof value === 'number' ? undefined : value;
+      }
+
+      const strFilteredJSON = JSON.stringify(obj, filter, 2);
+      console.log(typeof strFilteredJSON, strFilteredJSON);
+      //       string {
+      //   "name": "Kiwoong",
+      //   "alive": true,
+      //   "hobby": [
+      //     "programming",
+      //     "climbing"
+      //   ]
+      // }
+      const todos = [
+        { id: 1, content: 'HTML', complete: false },
+        { id: 2, content: 'JavaScript', complete: true },
+        { id: 3, content: 'Ajax', complete: false },
+      ];
+      const json1 = JSON.stringify(todos, null, 2);
+      console.log(typeof json1, json1);
+      //       string [
+      //   {
+      //     "id": 1,
+      //     "content": "HTML",
+      //     "complete": false
+      //   },
+      //   {
+      //     "id": 2,
+      //     "content": "JavaScript",
+      //     "complete": true
+      //   },
+      //   {
+      //     "id": 3,
+      //     "content": "Ajax",
+      //     "complete": false
+      //   }
+      // ]
+    </script>
+  </body>
+</html>

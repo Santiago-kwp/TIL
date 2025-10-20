@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <pre></pre>
+    <script>
+      const xhr = new XMLHttpRequest();
+      // HTTP 요청 초기화
+      // todos 리소스에서 id로 todo를 정하여 complete 속성만 수정해 본다.
+
+      xhr.open('PATCH', '/todos/3');
+
+      // 요청 담을 MIME 타입을 지정
+      xhr.setRequestHeader('content-type', 'application/json');
+
+      // HTTP 요청 전송
+      xhr.send(JSON.stringify({ id: 3, content: 'React', complete: false }));
+
+      //xhr.onload 이벤트를 이용해서 요청이 성공적으로 완료된 경우 발생하는 코드
+      xhr.onload = () => {
+        if (xhr.status == 200 || xhr.status == 201) {
+          document.querySelector('pre').textContent = xhr.response;
+        } else {
+          console.log('Error', xhr.status, xhr.statusText);
+        }
+      };
+    </script>
+  </body>
+</html>
