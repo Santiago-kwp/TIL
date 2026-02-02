@@ -2,6 +2,8 @@
 create schema sql_receipt;
 set search_path to sql_receipt;
 
+-- 6강. 여러 개의 값에 대한 조
+
 -- 데이터 6-2
 create table quarterly_sales(
     year varchar(4),
@@ -207,6 +209,8 @@ select ip
 	as ip_padding
 from 
 	(select '192.168.0.1' as ip) as t;
+
+-- 7강. 하나의 테이블에 대한 조
 	
 -- 데이터 7-2 인기 상품(popular_products) 테이블
 drop table if exists popular_products;
@@ -376,5 +380,80 @@ select
 	from purchase_detail_log
 	group by purchase_id
 	order by purchase_id;
+
+-- 열로 표현된 값을 행으로 변환하
+-- 컬럼으로 표현된 가로 기반 데이터의 특징은 데이터의 수가 고정되어 있다는 것
+-- 예를 들어, 하나의 레코드는 q1부터 q4까지 모두 4개의 데이터로 구성됨. 
+-- 행으로 전개할 데이터 수가 고정되었다면, 그러한 데이터 수와 같은 수의 일련 번호를 가진 피벗 테이블을 만들고 CROSS JOIN 하면 됨.
+
+-- 코드 7-12 일련 번호를 가진 피벗 테이블을 사용해 행으로 변환하는 쿼리
+select
+	q.year
+	-- Q1에서 Q4까지의 레이블 이름 출력하기
+	, case
+		when p.idx = 1 then 'q1'
+		when p.idx = 2 then 'q2'
+		when p.idx = 3 then 'q3'
+		when p.idx = 4 then 'q4'
+	end as quarter
+	-- Q1에서 Q4까지의 매출 출력하기
+	, case 
+		when p.idx = 1 then q.q1
+		when p.idx = 2 then q.q2
+		when p.idx = 3 then q.q3
+		when p.idx = 4 then q.q4
+	end as sales
+from quarterly_sales as q
+cross join
+	-- 행으로 전개하고 싶은 열의 수만큼 순번 테이블 만들기
+	(			select 1 as idx
+	union all 	select 2 as idx
+	union all 	select 3 as idx
+	union all 	select 4 as idx
+	) as p;
+
+-- 임의의 길이를 가진 배열을 행으로 전개하기
+-- 고정 길이의 데이터를 행으로 전개하는 것은 비교적 간단하지만, 데이터의 길이가 확정되지 않은 경우는 조금 복잡함.
+-- 구매 로그 테이블을 사용해 상품 ID들을 레코드로 하나하나 전개하는 예시
+
+-- 테이블 함수를 구현하고 있는 미들웨어라면 배열을 쉽게 레코드로 전개할 수 있음.
+-- 이때, 테이블 함수란 함수의 리턴값이 테이블인 함수를 의미함.
+-- 대표적인 테이블 함수로는 PostgreSQL과 BigQuery의 unnest 함수. Hive와 SparkSQL의 explode 함수가 있음
+-- 이러한 함수는 매개변수로 배열을 받고 배열을 레코드 분할해서 리턴해줌
+
+-- 코드 7-13 테이블 함수를 사용해 배열을 행으로 전개하는 쿼리
+select unnest(array['A001','A002','A003']) as product_id;
+
+create table purchase_log as
+select
+	purchase_id
+	-- 상품 ID를 배열에 집약하고 쉼표로 구분된 문자열로 변환하기
+	-- PostegreSQL, BigQuery의 경우는 string_agg 사용하기
+	, string_agg(product_id, ',') as product_ids
+	, sum(price) as amount
+	from purchase_detail_log
+	group by purchase_id
+	order by purchase_id;
+
+
+
+-- 코드 7-14 테이블 함수를 사용해 쉼표로 구분된 문자열 데이터를 행으로 전개하는 쿼리
+select
+	purchase_id
+	, product_id
+from 
+	purchase_log as p
+	-- string_to_array 함수로 문자열을 배열로 변환하고, unnest 함수로 테이블로 변환하기
+	cross join unnest(string_to_array(product_ids, ',')) as product_id
+	
+-- 코드 7-15 PostgreSQL에서 쉼표로 구분된 데이터를 행으로 전개하는 쿼리
+select
+	purchase_id
+	-- 쉼표로 구분된 문자열을 한 번에 행으로 전개하기
+	, regexp_split_to_table(product_ids, ',') as product_id
+	from purchase_log;
+
+	
+	
 	
 

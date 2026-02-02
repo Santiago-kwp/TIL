@@ -1,9 +1,8 @@
 # Chapter 3: 데이터 가공을 위한 SQL
 
-## 개요
-여러 값을 비교하고 다양한 데이터 타입을 다루는 SQL 기법을 학습합니다.
-
 ---
+
+# 6강. 여러 개의 값에 대한 조작
 
 ## 1. 여러 값 비교하기
 
@@ -146,7 +145,9 @@ FROM (SELECT '192.168.0.1' AS ip) AS t;
 
 ---
 
-## 6. 윈도우 함수
+# 7강. 하나의 테이블에 대한 조작
+
+## 1. 윈도우 함수
 
 ### 순위 함수
 | 함수 | 설명 |
@@ -172,6 +173,14 @@ FROM popular_products;
 ### 윈도우 프레임과 집계 함수
 - `ROWS BETWEEN ... AND ...`: 윈도우 프레임 지정
 
+| 프레임 옵션 | 설명 |
+|------------|------|
+| `UNBOUNDED PRECEDING` | 파티션의 첫 번째 행 |
+| `CURRENT ROW` | 현재 행 |
+| `UNBOUNDED FOLLOWING` | 파티션의 마지막 행 |
+| `n PRECEDING` | 현재 행 기준 n행 이전 |
+| `n FOLLOWING` | 현재 행 기준 n행 이후 |
+
 ```sql
 SELECT product_id, score,
     -- 누계 점수
@@ -188,11 +197,15 @@ SELECT product_id, score,
 FROM popular_products;
 ```
 
-### PARTITION BY - 그룹별 윈도우 함수
+---
+
+## 2. PARTITION BY - 그룹별 윈도우 함수
+
 ```sql
 SELECT category, product_id, score,
     ROW_NUMBER() OVER(PARTITION BY category ORDER BY score DESC) AS row,
-    RANK() OVER(PARTITION BY category ORDER BY score DESC) AS rank
+    RANK() OVER(PARTITION BY category ORDER BY score DESC) AS rank,
+    DENSE_RANK() OVER(PARTITION BY category ORDER BY score DESC) AS dense_rank
 FROM popular_products;
 ```
 
@@ -206,9 +219,19 @@ SELECT * FROM (
 WHERE rank <= 2;
 ```
 
+### DISTINCT + FIRST_VALUE로 카테고리별 최상위 추출
+```sql
+SELECT DISTINCT category,
+    FIRST_VALUE(product_id) OVER(
+        PARTITION BY category ORDER BY score DESC
+        ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+    ) AS product_id
+FROM popular_products;
+```
+
 ---
 
-## 7. 행과 열 변환 (Pivot)
+## 3. 행을 열로 변환 (Pivot)
 
 ### 행을 열로 변환
 ```sql
@@ -231,8 +254,89 @@ GROUP BY purchase_id;
 
 ---
 
-## 핵심 함수 요약
+## 4. 열을 행으로 변환 (Unpivot)
 
+가로 기반 데이터(컬럼)를 세로 기반 데이터(행)로 전환하는 기법
+
+### 고정 길이 데이터: 피벗 테이블 + CROSS JOIN
+- 데이터 수가 고정되어 있을 때 사용
+- 전개할 데이터 수만큼의 일련 번호를 가진 피벗 테이블을 만들어 CROSS JOIN
+
+```sql
+SELECT
+    q.year,
+    -- Q1~Q4 레이블 출력
+    CASE
+        WHEN p.idx = 1 THEN 'q1'
+        WHEN p.idx = 2 THEN 'q2'
+        WHEN p.idx = 3 THEN 'q3'
+        WHEN p.idx = 4 THEN 'q4'
+    END AS quarter,
+    -- Q1~Q4 매출 출력
+    CASE
+        WHEN p.idx = 1 THEN q.q1
+        WHEN p.idx = 2 THEN q.q2
+        WHEN p.idx = 3 THEN q.q3
+        WHEN p.idx = 4 THEN q.q4
+    END AS sales
+FROM quarterly_sales AS q
+CROSS JOIN (
+    -- 행으로 전개할 열의 수만큼 순번 테이블 생성
+              SELECT 1 AS idx
+    UNION ALL SELECT 2 AS idx
+    UNION ALL SELECT 3 AS idx
+    UNION ALL SELECT 4 AS idx
+) AS p;
+```
+
+---
+
+## 5. 배열을 행으로 전개하기
+
+데이터 길이가 가변적일 때 테이블 함수를 사용하여 배열을 행으로 전개
+
+### 테이블 함수란?
+- 리턴값이 테이블인 함수
+- 배열을 매개변수로 받아 레코드로 분할하여 리턴
+
+| 미들웨어 | 함수 |
+|---------|------|
+| PostgreSQL, BigQuery | `UNNEST()` |
+| Hive, SparkSQL | `EXPLODE()` |
+
+### UNNEST 기본 사용법
+```sql
+SELECT UNNEST(ARRAY['A001', 'A002', 'A003']) AS product_id;
+```
+
+### 쉼표로 구분된 문자열을 행으로 전개
+```sql
+-- 방법 1: STRING_TO_ARRAY + UNNEST + CROSS JOIN
+SELECT
+    purchase_id,
+    product_id
+FROM purchase_log AS p
+CROSS JOIN UNNEST(STRING_TO_ARRAY(product_ids, ',')) AS product_id;
+
+-- 방법 2: REGEXP_SPLIT_TO_TABLE (PostgreSQL 전용, 더 간단)
+SELECT
+    purchase_id,
+    REGEXP_SPLIT_TO_TABLE(product_ids, ',') AS product_id
+FROM purchase_log;
+```
+
+### 관련 함수 비교
+| 함수 | 용도 |
+|------|------|
+| `STRING_TO_ARRAY(문자열, 구분자)` | 문자열을 배열로 변환 |
+| `UNNEST(배열)` | 배열을 행으로 전개 |
+| `REGEXP_SPLIT_TO_TABLE(문자열, 패턴)` | 정규식으로 분리하여 바로 행으로 전개 |
+
+---
+
+# 핵심 함수 요약
+
+## 6강 함수
 | 함수 | 용도 |
 |------|------|
 | `COALESCE()` | NULL 대체값 지정 |
@@ -243,7 +347,14 @@ GROUP BY purchase_id;
 | `AGE()` | 날짜 차이 계산 |
 | `SPLIT_PART()` | 문자열 분리 |
 | `LPAD()` | 문자열 왼쪽 채우기 |
+
+## 7강 함수
+| 함수 | 용도 |
+|------|------|
 | `ROW_NUMBER()`, `RANK()`, `DENSE_RANK()` | 순위 부여 |
 | `LAG()`, `LEAD()` | 이전/다음 행 참조 |
 | `FIRST_VALUE()`, `LAST_VALUE()` | 프레임 내 첫/마지막 값 |
 | `STRING_AGG()` | 문자열 집약 |
+| `UNNEST()` | 배열을 행으로 전개 |
+| `STRING_TO_ARRAY()` | 문자열을 배열로 변환 |
+| `REGEXP_SPLIT_TO_TABLE()` | 정규식으로 분리하여 행으로 전개 |
