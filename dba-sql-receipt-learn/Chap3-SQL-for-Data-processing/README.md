@@ -37,7 +37,8 @@ FROM quarterly_sales;
 ---
 
 ## 2. CTR(클릭률) 계산
-
+- 하나하나 구할 때 `ctr_as_percent` 컬럼처럼 click에 `100.0`을 곱해 계산하면,
+  자료형 변환이 자동으로 이루어지므로 쿼리가 간단해짐
 ### 0으로 나누기 방지
 ```sql
 SELECT dt, ad_id,

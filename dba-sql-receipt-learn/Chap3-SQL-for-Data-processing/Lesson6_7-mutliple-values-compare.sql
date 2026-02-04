@@ -59,6 +59,10 @@ insert into advertising_stats(dt, ad_id, impressions, clicks) values
 
 select * from advertising_stats;
 
+/*
+ 하나하나 구할 때 ctr_as_percent 컬럼처럼 click에 100.0을 곱해 계산하면,
+ 자료형 변환이 자동으로 이루어지므로 쿼리가 간단해짐
+ */
 -- CTR 계산
 select dt, ad_id,
        cast(clicks as double precision) / impressions as ctr,
