@@ -334,6 +334,242 @@ FROM purchase_log;
 
 ---
 
+# 8강. 여러 개의 테이블 조작하기
+
+여러 개의 테이블을 조작할 때 SQL을 간단하고 가독성 높게 작성하는 방법
+
+---
+
+## 1. 여러 개의 테이블을 세로로 결합하기 (UNION ALL)
+
+비슷한 구조의 테이블을 하나로 합칠 때 사용
+
+### 주의사항
+- 결합할 테이블의 컬럼이 완전히 일치해야 함
+- 한쪽에만 있는 컬럼은 제외하거나 기본값(NULL 등)을 지정
+
+```sql
+-- 두 앱의 사용자 테이블을 세로로 결합
+SELECT 'app1' AS app_name, user_id, name, email
+FROM app1_mst_users
+UNION ALL
+SELECT 'app2' AS app_name, user_id, name, NULL AS email
+FROM app2_mst_users;
+```
+
+---
+
+## 2. 여러 개의 테이블을 가로로 정렬하기 (JOIN)
+
+### JOIN 사용 시 주의사항
+- 단순 JOIN은 결합하지 못한 데이터가 사라지거나 중복 발생 가능
+- 마스터 테이블의 행 수를 유지하려면 `LEFT JOIN` 사용
+- 결합 레코드가 1개 이하가 되는 조건 필요
+
+### LEFT JOIN으로 마스터 행 수 유지
+```sql
+SELECT
+    m.category_id,
+    m.name,
+    s.sales,
+    r.product_id AS top_sale_product
+FROM mst_categories AS m
+LEFT JOIN category_sales AS s
+    ON m.category_id = s.category_id
+LEFT JOIN product_sale_ranking AS r
+    ON m.category_id = r.category_id
+    AND r.rank = 1;  -- 1위 상품만 결합
+```
+
+### 상관 서브쿼리로 가로 정렬
+JOIN 없이 SELECT 절 내에서 서브쿼리로 값 추출
+
+```sql
+SELECT
+    m.category_id,
+    m.name,
+    -- 상관 서브쿼리로 매출액 추출
+    (SELECT s.sales
+     FROM category_sales AS s
+     WHERE m.category_id = s.category_id) AS sales,
+    -- 상관 서브쿼리로 최고 매출 상품 추출
+    (SELECT r.product_id
+     FROM product_sale_ranking AS r
+     WHERE m.category_id = r.category_id
+     ORDER BY sales DESC
+     LIMIT 1) AS top_sale_product
+FROM mst_categories AS m;
+```
+
+---
+
+## 3. 조건 플래그를 0과 1로 표현하기
+
+마스터 테이블에 다양한 조건을 플래그로 표현
+
+```sql
+SELECT
+    m.user_id,
+    m.card_number,
+    COUNT(p.user_id) AS purchase_count,
+    -- 신용카드 등록 여부 (NULL이 아니면 1)
+    CASE WHEN m.card_number IS NOT NULL THEN 1 ELSE 0 END AS has_card,
+    -- 구매 이력 여부 (COUNT > 0이면 1)
+    SIGN(COUNT(p.user_id)) AS has_purchased
+FROM mst_users_with_card_number AS m
+LEFT JOIN purchase_log AS p
+    ON m.user_id = p.user_id
+GROUP BY m.user_id, m.card_number;
+```
+
+---
+
+## 4. CTE (Common Table Expression) - 계산 테이블에 이름 붙이기
+
+SQL99에서 도입된 공통 테이블 식으로 일시 테이블에 이름을 붙여 재사용
+
+### 기본 문법
+```sql
+WITH 테이블명 AS (
+    SELECT ...
+)
+SELECT * FROM 테이블명;
+```
+
+### CTE 기본 예제
+```sql
+WITH product_sale_ranking AS (
+    SELECT
+        category_name,
+        product_id,
+        sales,
+        ROW_NUMBER() OVER(PARTITION BY category_name ORDER BY sales DESC) AS rank
+    FROM product_sales
+)
+SELECT * FROM product_sale_ranking;
+```
+
+### 여러 CTE 연결하기
+```sql
+WITH
+    product_sale_ranking AS (
+        SELECT
+            category_name,
+            product_id,
+            sales,
+            ROW_NUMBER() OVER(PARTITION BY category_name ORDER BY sales DESC) AS rank
+        FROM product_sales
+    ),
+    mst_rank AS (
+        SELECT DISTINCT rank FROM product_sale_ranking
+    )
+SELECT * FROM mst_rank;
+```
+
+### CTE 활용: 카테고리별 순위를 횡단적으로 출력
+```sql
+WITH
+    product_sale_ranking AS (
+        SELECT
+            category_name, product_id, sales,
+            ROW_NUMBER() OVER(PARTITION BY category_name ORDER BY sales DESC) AS rank
+        FROM product_sales
+    ),
+    mst_rank AS (
+        SELECT DISTINCT rank FROM product_sale_ranking
+    )
+SELECT
+    m.rank,
+    r1.product_id AS dvd,
+    r1.sales AS dvd_sales,
+    r2.product_id AS cd,
+    r2.sales AS cd_sales,
+    r3.product_id AS book,
+    r3.sales AS book_sales
+FROM mst_rank AS m
+LEFT JOIN product_sale_ranking AS r1
+    ON m.rank = r1.rank AND r1.category_name = 'dvd'
+LEFT JOIN product_sale_ranking AS r2
+    ON m.rank = r2.rank AND r2.category_name = 'cd'
+LEFT JOIN product_sale_ranking AS r3
+    ON m.rank = r3.rank AND r3.category_name = 'book'
+ORDER BY m.rank;
+```
+
+---
+
+## 5. 유사 테이블 만들기
+
+실제 테이블 없이 임시로 데이터를 생성하는 방법
+
+### 방법 1: UNION ALL (표준 SQL)
+```sql
+WITH mst_devices AS (
+        SELECT 1 AS device_id, 'PC' AS device_name
+    UNION ALL SELECT 2 AS device_id, 'SP' AS device_name
+    UNION ALL SELECT 3 AS device_id, '애플리케이션' AS device_name
+)
+SELECT * FROM mst_devices;
+```
+
+### 방법 2: VALUES 구문 (PostgreSQL)
+성능이 더 좋고 코드가 간결함
+
+```sql
+WITH mst_devices(device_id, device_name) AS (
+    VALUES
+        (1, 'PC'),
+        (2, 'SP'),
+        (3, '애플리케이션')
+)
+SELECT * FROM mst_devices;
+```
+
+### 방법 3: 배열 + EXPLODE (Hive, SparkSQL)
+```sql
+WITH mst_devices AS (
+    SELECT
+        d[0] AS device_id,
+        d[1] AS device_name
+    FROM (
+        SELECT EXPLODE(
+            ARRAY(
+                ARRAY('1', 'PC'),
+                ARRAY('2', 'SP'),
+                ARRAY('3', '애플리케이션')
+            )
+        ) d
+    ) AS t
+)
+SELECT * FROM mst_devices;
+```
+
+### 순번 테이블 생성
+
+#### PostgreSQL: generate_series
+```sql
+WITH series AS (
+    SELECT generate_series(1, 5) AS idx
+)
+SELECT * FROM series;
+```
+
+#### BigQuery: generate_array + unnest
+```sql
+SELECT idx FROM UNNEST(generate_array(1, 5)) AS idx;
+```
+
+#### Hive/SparkSQL: repeat + split + explode
+```sql
+SELECT
+    ROW_NUMBER() OVER(ORDER BY x) AS idx
+FROM (
+    SELECT EXPLODE(SPLIT(REPEAT('x', 5-1), 'x')) AS x
+) AS t;
+```
+
+---
+
 # 핵심 함수 요약
 
 ## 6강 함수
@@ -358,3 +594,14 @@ FROM purchase_log;
 | `UNNEST()` | 배열을 행으로 전개 |
 | `STRING_TO_ARRAY()` | 문자열을 배열로 변환 |
 | `REGEXP_SPLIT_TO_TABLE()` | 정규식으로 분리하여 행으로 전개 |
+
+## 8강 함수/구문
+| 함수/구문 | 용도 |
+|----------|------|
+| `UNION ALL` | 테이블 세로 결합 |
+| `LEFT JOIN` | 마스터 행 유지하며 가로 결합 |
+| 상관 서브쿼리 | SELECT 절에서 다른 테이블 값 참조 |
+| `WITH ... AS (CTE)` | 일시 테이블에 이름 붙여 재사용 |
+| `VALUES` | 유사 테이블 생성 (PostgreSQL) |
+| `generate_series()` | 순번 생성 (PostgreSQL) |
+| `EXPLODE()` | 배열을 행으로 전개 (Hive/SparkSQL) |

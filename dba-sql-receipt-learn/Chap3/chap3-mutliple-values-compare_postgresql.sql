@@ -2,7 +2,7 @@
 create schema sql_receipt;
 set search_path to sql_receipt;
 
--- 6강. 여러 개의 값에 대한 조
+-- 6강. 여러 개의 값에 대한 조작
 
 -- 데이터 6-2
 create table quarterly_sales(
@@ -452,8 +452,5 @@ select
 	-- 쉼표로 구분된 문자열을 한 번에 행으로 전개하기
 	, regexp_split_to_table(product_ids, ',') as product_id
 	from purchase_log;
-
-	
-	
 	
 
