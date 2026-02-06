@@ -381,6 +381,380 @@ ORDER BY r_rank DESC;
 
 ---
 
+# 12강. 사용자 전체의 시계열 변화 찾기
+
+사용자의 서비스 사용을 시계열로 수치화하고 변화를 시각화하는 방법
+
+---
+
+## 1. 등록 수의 추이와 경향 보기
+
+### 날짜별 등록 수 추이
+```sql
+SELECT
+    register_date,
+    COUNT(DISTINCT user_id) AS register_count
+FROM mst_users
+GROUP BY register_date
+ORDER BY register_date;
+```
+
+### 월별 등록 수와 전월비 계산
+```sql
+WITH mst_users_with_year_month AS (
+    SELECT
+        *,
+        SUBSTRING(register_date, 1, 7) AS year_month
+    FROM mst_users
+)
+SELECT
+    year_month,
+    COUNT(DISTINCT user_id) AS register_count,
+    LAG(COUNT(DISTINCT user_id)) OVER(ORDER BY year_month) AS last_month_count,
+    1.0 * COUNT(DISTINCT user_id)
+        / LAG(COUNT(DISTINCT user_id)) OVER(ORDER BY year_month)
+        AS month_over_month_ratio
+FROM mst_users_with_year_month
+GROUP BY year_month;
+```
+
+---
+
+## 2. 지속률과 정착률 산출하기
+
+### 지속률과 정착률의 정의
+| 지표 | 정의 | 사용 서비스 예시 |
+|------|------|----------------|
+| **지속률** | 등록일 기준 이후 지정일에 서비스 사용 여부 | 뉴스 사이트, 소셜 게임, SNS (매일 사용) |
+| **정착률** | 등록일 기준 이후 7일간 한 번이라도 사용 여부 | EC 사이트, 리뷰 사이트, Q&A 사이트 (목적 기반 사용) |
+
+### 다음날 지속률 계산
+```sql
+WITH action_log_with_mst_users AS (
+    SELECT
+        u.user_id,
+        u.register_date,
+        CAST(a.stamp AS date) AS action_date,
+        MAX(CAST(a.stamp AS date)) OVER() AS latest_date,
+        CAST(u.register_date::date + '1 day'::interval AS date) AS next_day_1
+    FROM mst_users u
+    LEFT OUTER JOIN action_log AS a
+        ON u.user_id = a.user_id
+),
+user_action_flag AS (
+    SELECT
+        user_id,
+        register_date,
+        SIGN(
+            SUM(
+                CASE WHEN next_day_1 <= latest_date THEN
+                    CASE WHEN next_day_1 = action_date THEN 1 ELSE 0 END
+                END
+            )
+        ) AS next_1_day_action
+    FROM action_log_with_mst_users
+    GROUP BY user_id, register_date
+)
+SELECT
+    register_date,
+    AVG(100.0 * next_1_day_action) AS repeat_rate_1_day
+FROM user_action_flag
+GROUP BY register_date
+ORDER BY register_date;
+```
+
+### 핵심 기법: latest_date 체크의 필요성
+```sql
+CASE WHEN next_day_1 <= latest_date THEN
+    CASE WHEN next_day_1 = action_date THEN 1 ELSE 0 END
+END
+```
+- **문제**: 로그 데이터가 없는 미래 날짜에 대해 "사용하지 않음"으로 잘못 판정될 수 있음
+- **해결**: `latest_date` 이전인 경우에만 판정 → 아직 관찰하지 못한 기간은 NULL 처리
+
+### 지속률 지표 마스터 테이블 (VALUES 구문)
+```sql
+WITH repeat_interval(index_name, interval_date) AS (
+    VALUES
+        ('01 day repeat', 1),
+        ('02 day repeat', 2),
+        ('03 day repeat', 3),
+        ('04 day repeat', 4),
+        ('05 day repeat', 5),
+        ('06 day repeat', 6),
+        ('07 day repeat', 7)
+)
+SELECT * FROM repeat_interval;
+```
+
+### n일 지속률 집계 (세로 기반)
+```sql
+WITH repeat_interval(index_name, interval_date) AS (
+    VALUES ('01 day repeat', 1), ('02 day repeat', 2), ...
+),
+action_log_with_index_date AS (
+    SELECT
+        u.user_id,
+        u.register_date,
+        CAST(a.stamp AS date) AS action_date,
+        MAX(CAST(a.stamp AS date)) OVER() AS latest_date,
+        r.index_name,
+        CAST(u.register_date::date + interval '1 day' * r.interval_date AS date) AS index_date
+    FROM mst_users AS u
+    LEFT OUTER JOIN action_log AS a ON u.user_id = a.user_id
+    CROSS JOIN repeat_interval AS r
+),
+user_action_flag AS (
+    SELECT
+        user_id, register_date, index_name,
+        SIGN(
+            SUM(
+                CASE WHEN index_date <= latest_date THEN
+                    CASE WHEN index_date = action_date THEN 1 ELSE 0 END
+                END
+            )
+        ) AS index_date_action
+    FROM action_log_with_index_date
+    GROUP BY user_id, register_date, index_name, index_date
+)
+SELECT
+    register_date, index_name,
+    AVG(100.0 * index_date_action) AS repeat_rate
+FROM user_action_flag
+GROUP BY register_date, index_name
+ORDER BY register_date, index_name;
+```
+
+### 정착률 지표 마스터 (기간 범위)
+```sql
+WITH repeat_interval(index_name, interval_begin_date, interval_end_date) AS (
+    VALUES
+        ('07 day retention', 1, 7),
+        ('14 day retention', 8, 14),
+        ('21 day retention', 15, 21),
+        ('28 day retention', 22, 28)
+)
+SELECT * FROM repeat_interval;
+```
+
+### 정착률 계산
+```sql
+-- 지표 대상 기간 시작일/종료일 계산
+CAST(u.register_date::date + '1day'::interval * r.interval_begin_date AS date) AS index_begin_date,
+CAST(u.register_date::date + '1day'::interval * r.interval_end_date AS date) AS index_end_date
+
+-- 기간 내 액션 여부 판정
+CASE WHEN action_date BETWEEN index_begin_date AND index_end_date THEN 1 ELSE 0 END
+```
+
+---
+
+## 3. 지속과 정착에 영향을 주는 액션 집계하기
+
+### 분석 목적
+- 1일 지속률 개선 → 등록 당일 사용자 행동 분석
+- 14일 정착률 개선 → 7일 정착률 기간 동안의 행동 분석
+
+### 모든 사용자-액션 조합 생성
+```sql
+WITH mst_actions AS (
+    SELECT 'view' AS action
+    UNION ALL SELECT 'comment' AS action
+    UNION ALL SELECT 'follow' AS action
+),
+mst_user_actions AS (
+    SELECT
+        u.user_id,
+        u.register_date,
+        a.action
+    FROM mst_users AS u
+    CROSS JOIN mst_actions AS a
+)
+SELECT * FROM mst_user_actions;
+```
+
+### 등록일 액션 실행 여부 플래그
+```sql
+SELECT DISTINCT
+    m.user_id,
+    m.register_date,
+    m.action,
+    CASE WHEN a.action IS NOT NULL THEN 1 ELSE 0 END AS do_action,
+    index_name,
+    index_date_action
+FROM mst_user_actions AS m
+LEFT JOIN action_log AS a
+    ON m.user_id = a.user_id
+    AND CAST(m.register_date AS date) = CAST(a.stamp AS date)
+    AND m.action = a.action
+LEFT JOIN user_action_flag AS f
+    ON m.user_id = f.user_id;
+```
+
+### 액션별 지속률/정착률 비교
+```sql
+SELECT
+    action,
+    COUNT(1) AS users,
+    AVG(100.0 * do_action) AS usage_rate,
+    index_name,
+    AVG(CASE do_action WHEN 1 THEN 100.0 * index_date_action END) AS idx_rate,
+    AVG(CASE do_action WHEN 0 THEN 100.0 * index_date_action END) AS no_action_idx_rate
+FROM register_action_flag
+GROUP BY index_name, action
+ORDER BY index_name, action;
+```
+
+---
+
+## 4. 액션 수에 따른 정착률 집계하기
+
+### 액션 단계 마스터 (버킷)
+```sql
+WITH mst_action_bucket(action, min_count, max_count) AS (
+    VALUES
+        ('comment', 0, 0),
+        ('comment', 1, 5),
+        ('comment', 6, 10),
+        ('comment', 11, 9999),
+        ('follow', 0, 0),
+        ('follow', 1, 5),
+        ('follow', 6, 10),
+        ('follow', 11, 9999)
+)
+SELECT * FROM mst_action_bucket;
+```
+
+### 등록 후 7일간 액션 횟수별 14일 정착률
+```sql
+SELECT
+    action,
+    min_count || ' ~ ' || max_count AS count_range,
+    SUM(CASE achieve WHEN 1 THEN 1 ELSE 0 END) AS achieve,
+    index_name,
+    AVG(CASE achieve WHEN 1 THEN 100.0 * index_date_action END) AS achieve_index_rate
+FROM register_action_flag
+GROUP BY index_name, action, min_count, max_count
+ORDER BY index_name, action, min_count;
+```
+
+---
+
+## 5. 사용 일수에 따른 정착률 집계하기
+
+### 분석 인사이트 예시
+- 7일 정착 기간 중 1~4일만 사용한 사용자가 약 70%
+- 1일 사용자의 28일 정착률: 20.8%
+- 5일 사용자의 28일 정착률: 45%
+- 6일 사용자의 28일 정착률: 55.5% (5일 대비 +10.5%)
+
+### 대책 예시
+- 소셜 게임: 1~5일 연속 접속 보상 + 6일차 대형 보너스
+
+---
+
+## 6. 사용자의 잔존율 집계하기
+
+### 잔존율 분석 목적
+- 등록 수개월 후 서비스 지속 사용 비율 파악
+- 과거/현재 비교 및 미래 전망 검토
+
+### 12개월 후까지 월별 잔존율 계산
+```sql
+WITH mst_intervals(interval_month) AS (
+    VALUES (1), (2), (3), (4), (5), (6), (7), (8), (9), (10), (11), (12)
+),
+mst_users_with_index_month AS (
+    SELECT
+        u.user_id,
+        u.register_date,
+        CAST(u.register_date::date + i.interval_month * '1 month'::interval AS date) AS index_date,
+        SUBSTRING(u.register_date, 1, 7) AS register_month,
+        SUBSTRING(CAST(u.register_date::date + i.interval_month * '1 month'::interval AS text), 1, 7) AS index_month
+    FROM mst_users AS u
+    CROSS JOIN mst_intervals AS i
+),
+action_log_in_month AS (
+    SELECT DISTINCT
+        user_id,
+        SUBSTRING(stamp, 1, 7) AS action_month
+    FROM action_log
+)
+SELECT
+    u.register_month,
+    u.index_month,
+    SUM(CASE WHEN a.action_month IS NOT NULL THEN 1 ELSE 0 END) AS users,
+    AVG(CASE WHEN a.action_month IS NOT NULL THEN 100.0 ELSE 0.0 END) AS retention_rate
+FROM mst_users_with_index_month AS u
+LEFT JOIN action_log_in_month AS a
+    ON u.user_id = a.user_id
+    AND u.index_month = a.action_month
+GROUP BY u.register_month, u.index_month
+ORDER BY u.register_month, u.index_month;
+```
+
+### 잔존율 분석 포인트
+| 현상 | 확인 사항 |
+|------|----------|
+| n개월 후 잔존율 하락 | 신규 등록자의 서비스 사용 장벽이 높아지지 않았는지 |
+| 특정 n개월 후 급락 | 서비스 사용 목적 달성 기간이 너무 짧지 않은지 |
+| 장기 사용자 이탈 | 서비스 내부 경쟁으로 지친 것은 아닌지 |
+
+---
+
+## 7. MAU (Monthly Active Users) 분석
+
+### MAU 사용자 분류
+| 분류 | 정의 |
+|------|------|
+| **신규 사용자** | 이번 달에 등록한 사용자 |
+| **리피트 사용자** | 이전 달에도 사용했던 사용자 |
+| **컴백 사용자** | 신규가 아니고, 이전 달 미사용 후 돌아온 사용자 |
+
+### 리피트 사용자 세분화
+| 분류 | 정의 |
+|------|------|
+| **신규 리피트** | 이전 달 신규 사용자 → 이번 달도 사용 |
+| **기존 리피트** | 이전 달 리피트 사용자 → 이번 달도 사용 |
+| **컴백 리피트** | 이전 달 컴백 사용자 → 이번 달도 사용 |
+
+### MAU 반복률
+- **신규 반복 MAU 반복률**: 이전 달 신규 → 이번 달 신규 리피트 비율
+- **기존 반복 MAU 반복률**: 이전 달 기존 → 이번 달 기존 리피트 비율
+- **컴백 반복 MAU 반복률**: 이전 달 컴백 → 이번 달 컴백 리피트 비율
+
+---
+
+## 8. 성장지수 집계하기
+
+### 성장지수 정의
+서비스 사용 관련 상태 변화를 수치화한 지표
+- **성장지수 > 1**: 서비스 성장 중
+- **성장지수 < 0**: 서비스 퇴보 중
+
+### 상태 변화 패턴
+| 패턴 | 설명 |
+|------|------|
+| **Signup** | 회원가입 |
+| **Deactivation** | 액티브 → 비액티브 |
+| **Reactivation** | 비액티브 → 액티브 복귀 |
+| **Exit** | 서비스 탈퇴/사용 중지 |
+
+### 성장지수 계산 공식
+```
+성장지수 = Signup + Reactivation - Deactivation - Exit
+```
+
+### 성장지수 집계를 위한 플래그
+| 플래그 | 의미 |
+|--------|------|
+| `is_new` | 신규 등록인가 |
+| `is_exit` | 탈퇴 회원인가 |
+| `is_access` | 특정 날짜에 서비스 접근했는가 |
+| `was_access` | 전날 서비스에 접근했는가 |
+
+---
+
 # 핵심 함수 요약
 
 ## 11강 함수/구문
@@ -418,4 +792,46 @@ NTILE(10) OVER(ORDER BY purchase_amount DESC) AS decile
 CURRENT_DATE - MAX(dt::date) AS recency  -- R
 COUNT(dt) AS frequency                    -- F
 SUM(amount) AS monetary                   -- M
+```
+
+## 12강 함수/구문
+| 함수/구문 | 용도 |
+|----------|------|
+| `VALUES (val1), (val2), ...` | 임시 테이블 생성 (인터벌 마스터) |
+| `LAG() OVER(ORDER BY ...)` | 이전 행 값 참조 (전월비 계산) |
+| `INTERVAL '1 day' * n` | 날짜 연산 (n일 후 계산) |
+| `CAST(date + interval AS date)` | TIMESTAMP → DATE 변환 |
+| `SIGN(SUM(...))` | 액션 실행 여부 0/1 플래그 |
+| `LEFT OUTER JOIN` | 사용자-액션 로그 결합 |
+| `CROSS JOIN` | 사용자-인터벌 모든 조합 생성 |
+| `BETWEEN begin AND end` | 기간 내 액션 판정 |
+| `SUBSTRING(date, 1, 7)` | 월 단위 추출 |
+
+### 지속률/정착률 핵심 패턴
+```sql
+-- 관찰 가능 기간 체크 (미래 데이터 오판정 방지)
+CASE WHEN index_date <= latest_date THEN
+    CASE WHEN index_date = action_date THEN 1 ELSE 0 END
+END
+```
+
+### 날짜 연산 패턴 (PostgreSQL)
+```sql
+-- n일 후 계산
+CAST(register_date::date + '1 day'::interval * n AS date) AS index_date
+
+-- n개월 후 계산
+CAST(register_date::date + interval_month * '1 month'::interval AS date) AS index_date
+```
+
+### 잔존율 패턴
+```sql
+-- 월별 잔존율 (등록월 기준 n개월 후)
+AVG(CASE WHEN a.action_month IS NOT NULL THEN 100.0 ELSE 0.0 END) AS retention_rate
+```
+
+### 성장지수 패턴
+```sql
+-- 성장지수 = Signup + Reactivation - Deactivation - Exit
+성장지수 = (신규등록) + (복귀) - (비활성화) - (탈퇴)
 ```
