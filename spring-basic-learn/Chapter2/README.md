@@ -88,6 +88,22 @@ consumer.eat();
 - **이후**: 외부에서 만들어진 Food를 Consumer에게 전달 → 제어 흐름: `Food → Consumer` (역전)
 - 결과적으로 어떤 Food든 코드 변경 없이 대응 가능하다.
 
+```mermaid
+flowchart LR
+    subgraph before["강한 결합 (IoC 적용 전)"]
+        direction LR
+        C1[Consumer] -- "직접 생성\nnew Chicken()" --> F1[Chicken]
+    end
+
+    subgraph after["약한 결합 (IoC 적용 후)"]
+        direction LR
+        EXT((외부)) -- "Food 주입" --> C2[Consumer]
+        C2 -- "food.eat()" --> IF[Food Interface]
+        IF -.-> CH2[Chicken]
+        IF -.-> PZ2[Pizza]
+    end
+```
+
 | 방향 | 결합도 |
 |------|--------|
 | Controller → Service → Repository | 강한 결합 |
@@ -102,6 +118,19 @@ consumer.eat();
 - DI를 사용하려면 객체 생성이 먼저 필요하다. Spring이 이 역할을 대신 해준다.
 - **Bean**: Spring이 관리하는 객체
 - **Spring IoC 컨테이너**: Bean을 모아둔 컨테이너
+
+```mermaid
+flowchart TB
+    subgraph IoC["Spring IoC Container"]
+        B1[MemoController\nBean]
+        B2[MemoService\nBean]
+        B3[MemoRepository\nBean]
+    end
+
+    CS["@ComponentScan"] -- "Bean 등록" --> IoC
+    B1 -- "@Autowired\n생성자 주입" --> B2
+    B2 -- "@Autowired\n생성자 주입" --> B3
+```
 
 ### 2.2 Bean 등록 방법
 
@@ -193,10 +222,32 @@ public class MemoService {
 - JPA는 영속성 컨텍스트에 Entity 객체들을 저장하여 관리하면서 DB와 소통한다.
 - 개발자는 직접 SQL을 작성하지 않아도 JPA를 사용하여 DB의 CRUD 작업이 가능하다.
 
+```mermaid
+flowchart LR
+    subgraph PC["영속성 컨텍스트"]
+        direction TB
+        C1["1차 캐시\n(Map: Id → Entity)"]
+        C2["쓰기 지연 저장소\n(ActionQueue)"]
+    end
+
+    APP[Application\nEntity 조작] <--> PC
+    PC -- "flush / commit\nSQL 실행" --> DB[(Database)]
+    DB -- "조회 결과" --> PC
+```
+
 ### 3.2 EntityManager와 EntityManagerFactory
 
 - **EntityManager**: Entity를 관리하는 관리자. 저장, 조회, 수정, 삭제를 담당한다.
 - **EntityManagerFactory**: EntityManager를 생성하며, 일반적으로 DB 하나에 하나만 생성되어 애플리케이션 동작 중 사용된다.
+
+```mermaid
+flowchart LR
+    EMF["EntityManagerFactory\n(DB당 1개)"] -- "생성" --> EM1["EntityManager 1"]
+    EMF -- "생성" --> EM2["EntityManager 2"]
+    EM1 -- "관리" --> PC1["영속성 컨텍스트 1"]
+    EM2 -- "관리" --> PC2["영속성 컨텍스트 2"]
+    PC1 & PC2 --> DB[(Database)]
+```
 
 ```java
 EntityManagerFactory emf = Persistence.createEntityManagerFactory("memo");
@@ -267,6 +318,23 @@ emf.close();
 - 영속성 컨텍스트 내부의 **캐시 저장소** (Map 자료구조)
   - **key**: `@Id`로 매핑한 식별자 값
   - **value**: Entity 객체
+
+```mermaid
+flowchart TD
+    subgraph PC["영속성 컨텍스트"]
+        subgraph Cache["1차 캐시 (Map)"]
+            direction LR
+            K1["@Id: 1"] --> V1["Memo Entity"]
+            K2["@Id: 2"] --> V2["Memo Entity"]
+        end
+        AQ["쓰기 지연 저장소\nINSERT SQL\nUPDATE SQL\nDELETE SQL"]
+    end
+
+    FIND["em.find(Memo.class, 1)"] --> Cache
+    Cache -- "캐시 Hit" --> RET["Entity 반환\n(DB 조회 X)"]
+    Cache -- "캐시 Miss" --> DB[(DB SELECT)]
+    DB -- "결과 → 캐시 저장" --> Cache
+```
 
 #### Entity 저장
 
@@ -340,6 +408,17 @@ et.commit();    // 이미 flush 되었으므로 추가 SQL 없음
 - 변경이 있다면 **Update SQL을 자동 생성**하여 DB에 반영한다.
 - 별도의 `em.update()` 메서드는 존재하지 않는다.
 
+```mermaid
+flowchart LR
+    A["em.find()로 조회"] --> B["1차 캐시에 저장\n+ 최초 상태(Snapshot) 저장"]
+    B --> C["Entity 값 변경\n(setter 호출)"]
+    C --> D["트랜잭션 commit"]
+    D --> E["flush() 호출"]
+    E --> F{"현재 상태 vs\n최초 상태(Snapshot)\n비교"}
+    F -- "변경 있음" --> G["Update SQL 자동 생성\n→ DB 반영"]
+    F -- "변경 없음" --> H["SQL 생성 안 함"]
+```
+
 ```java
 Memo memo = em.find(Memo.class, 4);   // 조회 (최초 상태 저장)
 
@@ -352,6 +431,28 @@ et.commit(); // flush() → 최초 상태와 비교 → Update SQL 자동 생성
 ---
 
 ## 5. Entity의 상태
+
+```mermaid
+stateDiagram-v2
+    [*] --> Transient: new Entity()
+
+    Transient --> Managed: em.persist()
+    Transient --> Managed: em.merge()\n(DB에 없으면 INSERT)
+
+    Managed --> Detached: em.detach() / em.clear() / em.close()
+    Managed --> Removed: em.remove()
+
+    Detached --> Managed: em.merge()\n(DB에 있으면 UPDATE)
+
+    Removed --> [*]: commit 시 DELETE SQL
+
+    state Managed {
+        [*] --> 영속성컨텍스트관리중
+        영속성컨텍스트관리중: 1차 캐시 저장
+        영속성컨텍스트관리중: 변경 감지 가능
+        영속성컨텍스트관리중: 쓰기 지연 적용
+    }
+```
 
 ### 5.1 비영속 (Transient)
 
@@ -553,6 +654,24 @@ public class SimpleJpaRepository<T, ID> implements JpaRepositoryImplementation<T
   - 자식 메서드가 종료되어도 즉시 commit되지 않고, **부모 메서드 종료 시** 트랜잭션이 commit된다.
   - 부모 트랜잭션이 없으면 자식 메서드가 자체적으로 트랜잭션을 생성한다.
 
+```mermaid
+flowchart TB
+    subgraph case1["Case 1: 부모 트랜잭션이 있는 경우"]
+        direction TB
+        P1["부모 메서드\n@Transactional"] --> |"트랜잭션 시작"| PT1["부모 트랜잭션"]
+        PT1 --> C1["자식 메서드\n@Transactional"]
+        C1 --> |"부모 트랜잭션에 합류"| PT1
+        PT1 --> |"부모 종료 시 commit"| COMMIT1["COMMIT"]
+    end
+
+    subgraph case2["Case 2: 부모 트랜잭션이 없는 경우"]
+        direction TB
+        P2["부모 메서드\n(트랜잭션 없음)"] --> C2["자식 메서드\n@Transactional"]
+        C2 --> |"자체 트랜잭션 생성"| CT2["자식 트랜잭션"]
+        CT2 --> |"자식 종료 시 commit"| COMMIT2["COMMIT"]
+    end
+```
+
 ---
 
 ## 7. Spring Data JPA
@@ -563,6 +682,42 @@ public class SimpleJpaRepository<T, ID> implements JpaRepositoryImplementation<T
 - JPA를 추상화시킨 **Repository 인터페이스**를 제공한다.
 - `JpaRepository` 인터페이스를 상속받으면, Spring이 자동으로 **SimpleJpaRepository** 클래스를 생성하고 Bean으로 등록한다.
 - 구현 클래스를 직접 작성하지 않아도 JPA 기능을 사용할 수 있다.
+
+```mermaid
+classDiagram
+    direction BT
+    class Repository {
+        <<interface>>
+    }
+    class CrudRepository {
+        <<interface>>
+        +save(entity)
+        +findById(id)
+        +delete(entity)
+    }
+    class PagingAndSortingRepository {
+        <<interface>>
+        +findAll(pageable)
+    }
+    class JpaRepository {
+        <<interface>>
+        +flush()
+        +saveAndFlush(entity)
+    }
+    class MemoRepository {
+        <<interface>>
+        개발자가 작성
+    }
+    class SimpleJpaRepository {
+        Spring이 자동 생성하여\nBean으로 등록
+    }
+
+    CrudRepository --|> Repository
+    PagingAndSortingRepository --|> CrudRepository
+    JpaRepository --|> PagingAndSortingRepository
+    MemoRepository --|> JpaRepository
+    SimpleJpaRepository ..|> MemoRepository : 구현
+```
 
 ### 7.2 사용 방법
 
