@@ -1,83 +1,763 @@
-# 04. OpenCV 인터페이스 기초 / 사용자 인터페이스 및 I/O 처리
+# 4. OpenCV 인터페이스 기초 — 사용자 인터페이스 및 I/O 처리
+
+## 목차
+
+- [4.1 윈도우 제어](#41-윈도우-제어)
+- [4.2 이벤트 처리 함수](#42-이벤트-처리-함수)
+- [4.3 그리기 함수](#43-그리기-함수)
+- [4.4 영상파일 처리](#44-영상파일-처리)
+- [4.5 비디오 처리](#45-비디오-처리)
+- [4.6 Matplotlib 패키지 활용](#46-matplotlib-패키지-활용)
+
+---
 
 ## 4.1 윈도우 제어
 
-> OpenCV에서는 윈도우가 활성화된 상태에서만 마우스나 키보드 이벤트를 감지할 수 있다.
-> 따라서 이런 이벤트를 감지해서 처리하려면 윈도우를 생성하고 제어할 수 있어야 한다.
+> OpenCV에서는 **윈도우가 활성화된 상태에서만** 마우스/키보드 이벤트를 감지할 수 있다.
+> 따라서 이벤트를 처리하려면 먼저 윈도우를 생성하고 제어할 수 있어야 한다.
+
+### 주요 함수
+
+| 함수 | 설명 |
+|------|------|
+| `cv2.namedWindow(winname, flags)` | 윈도우 생성 |
+| `cv2.moveWindow(winname, x, y)` | 윈도우 위치 이동 |
+| `cv2.resizeWindow(winname, w, h)` | 윈도우 크기 변경 |
+| `cv2.destroyWindow(winname)` | 특정 윈도우 제거 |
+| `cv2.destroyAllWindows()` | 모든 윈도우 제거 |
+
+### `namedWindow()` flags
+
+| 플래그 | 동작 |
+|--------|------|
+| `cv2.WINDOW_AUTOSIZE` (기본값) | 영상 크기에 맞게 자동 고정, 사용자가 크기 변경 불가 |
+| `cv2.WINDOW_NORMAL` | 사용자가 자유롭게 크기 변경 가능 |
+
+```python
+# 01.move_window.py
+import numpy as np, cv2
+
+image = np.zeros((500, 500, 3), np.uint8)
+image[:] = 200  # 밝은 회색
+
+title1, title2 = 'Position1', 'Position2'
+cv2.namedWindow(title1, cv2.WINDOW_AUTOSIZE)  # 크기 고정
+cv2.namedWindow(title2)
+cv2.moveWindow(title1, 100, 100)  # 화면 좌상단 기준 (x, y)
+cv2.moveWindow(title2, 400, 50)
+
+cv2.imshow(title1, image)
+cv2.imshow(title2, image)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+```
+
+```mermaid
+flowchart TD
+    A["namedWindow()
+    윈도우 생성"] --> B["moveWindow()
+    위치 지정"]
+    B --> C["imshow()
+    영상 출력"]
+    C --> D["waitKey()
+    이벤트 대기 루프"]
+    D --> E{종료 조건}
+    E -- "키 입력 / 조건 만족" --> F["destroyAllWindows()"]
+    E -- "계속" --> D
+```
+
+---
 
 ## 4.2 이벤트 처리 함수
 
-> OpenCV에서도 기본적인 이벤트 처리 함수들을 지원한다. 대표적으로 키보드 이벤트, 마우스 이벤트, 트랙바(trackbar) 이벤트를 처리하는 콜백 함수들이 있다.
+```mermaid
+graph TD
+    EV["OpenCV 이벤트"] --> KB["키보드 이벤트
+    waitKey / waitKeyEx"]
+    EV --> MS["마우스 이벤트
+    setMouseCallback"]
+    EV --> TB["트랙바 이벤트
+    createTrackbar"]
+
+    KB --> KB1["반환값으로 처리
+    (폴링 방식)"]
+    MS --> MS1["콜백 함수 등록
+    (이벤트 드리븐)"]
+    TB --> TB1["콜백 함수 등록
+    (이벤트 드리븐)"]
+```
 
 ### 4.2.1 키보드 이벤트 제어
 
-> 키보드 이벤트를 처리하기 위해 일반적인 콜백 함수가 아닌 `cv2.waitKey()` 함수와 `cv2.waitKeyEx()` 함수를 제공한다.
-> 두 함수는 다음과 같이 지연 시간(delay)을 지정하여 호출하면 키 이벤트에 해당하는 코드 값을 반환한다.
-> 두 함수 모두 delay 시간만큼 키 입력을 대기하고, 키 이벤트가 발생하면 해당 키 값 반환한다. waitKeyEx()는 전체 키 코드(full key code)를 반환한다.
+> `cv2.waitKey()` / `cv2.waitKeyEx()` — 키 이벤트 대기 후 키 코드 반환
 
-delay 인수에 따라서 두 가지 모드로 동작한다.
-첫 번째 모드는 delay<=0 인 경우이다. 이 경우 키 이벤트가 발생할 때까지 무한정 기다린다.
-다른 모드는 delay>0인 경우이다. delay 시간(ms)만큼 키보드의 입력을 기다리고, 키가 입력되면 해당 키의 코드 값을 반환한다. 만약 delay 시간 동안 키 이벤트가 발생하지 않으면 -1의 값을 반환한다.
+| 함수 | 반환값 |
+|------|--------|
+| `cv2.waitKey(delay)` | 하위 8비트 키 코드 |
+| `cv2.waitKeyEx(delay)` | 전체 키 코드 (특수키·방향키 포함) |
+
+| delay 값 | 동작 |
+|----------|------|
+| `delay <= 0` | 키 입력까지 **무한 대기** |
+| `delay > 0` | delay(ms)만큼 대기 후 `-1` 반환 (키 없으면) |
+
+```python
+# 03.event_key.py
+switch_case = {
+    ord('a'): "a키 입력",
+    ord('b'): "b키 입력",
+    0x41:     "A키 입력",
+    2424832:  "왼쪽 화살표",
+    2490368:  "위쪽 화살표",
+    2555904:  "오른쪽 화살표",
+    2621440:  "아래쪽 화살표",
+}
+
+while True:
+    key = cv2.waitKeyEx(100)   # 100ms 대기
+    if key == 27: break        # ESC → 종료
+    result = switch_case.get(key, -1)
+    if result != -1:
+        print(result)
+```
+
+> `ord('a')` : 문자 → 아스키코드 변환 (a=97, A=65)
+> 방향키는 `waitKeyEx()`로만 전체 코드를 받을 수 있다.
+
+---
 
 ### 4.2.2 마우스 이벤트 제어
 
-> 먼저 사용자가 마우스 이벤트를 처리하는 콜백 함수를 만들고, 이 함수를 `cv2.setMouseCallback()` 함수를 통해서 시스템에 등록한다.
-> 그러면 실행 과정에서 시스템이 마우스 이벤트를 감지했을 때, 사용자가 만든 콜백 함수를 호출한다.
+> 콜백 함수를 작성하고 `cv2.setMouseCallback()`로 시스템에 등록한다.
+> 이벤트 발생 시 시스템이 자동으로 콜백 함수를 호출한다.
+
+```
+cv2.setMouseCallback(windowName, onMouse [, param])
+```
+
+| 인수 | 설명 |
+|------|------|
+| `windowName` | 이벤트를 받을 윈도우 이름 |
+| `onMouse` | 마우스 이벤트 콜백 함수 |
+| `param` | 콜백 함수에 전달할 사용자 데이터 (기본값 None) |
+
+**콜백 함수 서명:** `onMouse(event, x, y, flags, param)`
+
+| 인수 | 설명 |
+|------|------|
+| `event` | 이벤트 종류 상수 |
+| `x, y` | 마우스 커서 위치 (윈도우 기준) |
+| `flags` | 키보드/버튼 상태 플래그 |
+| `param` | setMouseCallback에서 전달한 데이터 |
+
+**주요 마우스 이벤트 상수**
+
+| 상수 | 이벤트 |
+|------|--------|
+| `EVENT_LBUTTONDOWN` | 왼쪽 버튼 누름 |
+| `EVENT_LBUTTONUP` | 왼쪽 버튼 뗌 |
+| `EVENT_LBUTTONDBLCLK` | 왼쪽 버튼 더블클릭 |
+| `EVENT_RBUTTONDOWN` | 오른쪽 버튼 누름 |
+| `EVENT_RBUTTONUP` | 오른쪽 버튼 뗌 |
+| `EVENT_MOUSEMOVE` | 마우스 이동 |
+
+```python
+# 04.event_mouse.py
+def onMouse(event, x, y, flags, param):
+    if event == cv2.EVENT_LBUTTONDOWN:
+        print("마우스 왼쪽 버튼 누르기")
+    elif event == cv2.EVENT_RBUTTONDOWN:
+        print("마우스 오른쪽 버튼 누르기")
+    elif event == cv2.EVENT_LBUTTONDBLCLK:
+        print("마우스 왼쪽 버튼 더블클릭")
+
+cv2.setMouseCallback("Mouse Event1", onMouse)
+cv2.waitKey(0)
+```
+
+---
 
 ### 4.2.3 트랙바 이벤트 제어
 
-> 트랙바는 일정한 범위에서 특정한 값을 선택할 때 사용하는 일종의 스크롤바 혹은 슬라이더바를 말한다.
-> OpenCV의 트랙바는 cv2.createTrackbar() 함수로 생성할 수 있다.
-> 트랙바를 생성하려면 먼저 트랙바 이벤트를 처리하는 콜백 함수를 작성하고, 그 다음 시스템에 콜백 함수를 등록해야 한다.
-> 콜백 함수의 등록은 cv2.createTrackbar() 함수에 트랙바 이름, 윈도우 이름, 트랙바 현재값, 트랙바 최댓값 등을 지정한다.
-> `cv2.createTrackbar(trackbarname, winname, value, count, onChange)`
+> 트랙바(Trackbar) = 일정 범위에서 값을 선택하는 슬라이더 바
+> `cv2.createTrackbar()`로 생성, 값 변경 시 콜백 함수 자동 호출
+
+```
+cv2.createTrackbar(trackbarname, winname, value, count, onChange)
+```
+
+| 인수 | 설명 |
+|------|------|
+| `trackbarname` | 트랙바 이름 |
+| `winname` | 트랙바가 붙을 윈도우 이름 |
+| `value` | 트랙바 초기값 |
+| `count` | 트랙바 최댓값 |
+| `onChange` | 값 변경 시 호출될 콜백 함수 |
+
+```
+cv2.setTrackbarPos(trackbarname, winname, pos)  # 트랙바 위치 직접 설정
+cv2.getTrackbarPos(trackbarname, winname)        # 현재 트랙바 값 읽기
+```
+
+```python
+# 05.event_trackbar.py
+def onChange(value):
+    global image, title
+    add_value = value - int(image[0][0])
+    image[:] = image + add_value  # 행렬 + 스칼라 → 밝기 조절
+    cv2.imshow(title, image)
+
+image = np.zeros((300, 500), np.uint8)
+title = 'Trackbar Event'
+cv2.imshow(title, image)
+cv2.createTrackbar('Brightness', title, image[0][0], 255, onChange)
+cv2.waitKey(0)
+```
+
+**마우스 + 트랙바 연동 패턴 (`06.event_mouse_trackbar.py`)**
+
+```python
+# 오른쪽 버튼: 밝기 +10, 왼쪽 버튼: 밝기 -10
+# setTrackbarPos()로 트랙바 UI도 동기화
+cv2.setTrackbarPos(bar_name, title, image[0][0])
+```
+
+---
 
 ## 4.3 그리기 함수
 
-> 영상처리 프로그래밍 과정에서 해당 알고리즘을 적용했을 때, 처리가 정확히 적용되었는지를 출력 영상 위에 사각형이나 원을 그려서 확인하는 경우가 많음.
-> 예를 들어, 얼굴 검출 알고리즘 적용 시, 전체 영상 위에 검출한 얼굴 영역을 사각형이나, 원으로 표시, 차선을 검출하고자 직선 검출 알고리즘을 적용했을 때, 선으로 나타낼 수 있음
+> 영상처리 알고리즘의 결과(얼굴 검출 영역, 차선 등)를 영상 위에 시각적으로 표시할 때 사용
+
+### 공통 인수
+
+| 인수 | 설명 |
+|------|------|
+| `img` | 그려질 대상 행렬 (in-place 변경) |
+| `color` | BGR 튜플 — 예: `(255, 0, 0)` = 파란색 |
+| `thickness` | 선 두께 (px), `-1` 또는 `cv2.FILLED` = 내부 채움 |
+| `lineType` | 선 종류 |
+
+**lineType 종류**
+
+| 상수 | 설명 |
+|------|------|
+| `cv2.LINE_4` | 4방향 연결선 |
+| `cv2.LINE_8` (기본값) | 8방향 연결선 |
+| `cv2.LINE_AA` | 안티앨리어싱 (계단 현상 감소) |
+
+---
 
 ### 4.3.1 직선 및 사각형 그리기
 
-> `cv2.line()`, `cv2.rectangle()` 은 시작좌표(pt1)과 종료 좌표(pt2)가 있으면 그릴 수 있음.
-> 여기서 좌표와 색상으로 사용되는 인수는 정수형 튜플이어야 함.
+```
+cv2.line(img, pt1, pt2, color [, thickness [, lineType]])
+cv2.rectangle(img, pt1, pt2, color [, thickness [, lineType]])
+cv2.rectangle(img, roi, color [, thickness [, lineType]])  # roi: (x, y, w, h) 튜플
+```
+
+> 좌표(`pt1`, `pt2`)와 색상은 반드시 **정수형 튜플**이어야 한다.
+
+```python
+# 07.draw_line_rect.py
+blue, green, red = (255, 0, 0), (0, 255, 0), (0, 0, 255)
+image = np.zeros((400, 600, 3), np.uint8)
+image[:] = (255, 255, 255)
+
+pt1, pt2 = (50, 50), (250, 150)
+roi = (50, 200, 200, 100)  # ROI: (x, y, width, height)
+
+cv2.line(image, pt1, pt2, red)
+cv2.line(image, pt3, pt4, green, 3, cv2.LINE_AA)       # 안티앨리어싱
+cv2.rectangle(image, pt1, pt2, blue, 3, cv2.LINE_4)
+cv2.rectangle(image, roi, red, 3, cv2.LINE_8)
+cv2.rectangle(image, (400, 200, 100, 100), green, cv2.FILLED)  # 내부 채움
+```
+
+---
 
 ### 4.3.2 글자 쓰기
 
-> 영상 처리의 결과를 보여주기 위해서 행렬의 특정 위치에 원하는 글자를 써서 영상으로 표시하고 싶을 때 사용.
-> 이런 경우 `cv2.putText()` 함수를 사용.
-> 여기서 표시 문자열의 시작 좌표는 문자열의 좌하단임을 유의해야 함.
+```
+cv2.putText(img, text, org, fontFace, fontScale, color [, thickness])
+```
 
-- 세리프(Serif)는 글자의 획 끝에 낚시 바늘처럼 날카롭게 튀어나온 부분을 의미함. 세리프 폰트는 글자 끝부분에 날카로운 장식이 있는
-  글자체로서 명조체에 해당함.
-- 산세리프(Sans-serif) 폰트는 날카로운 장식선이 없는 글자체로서 고딕체에 해당함.
+| 인수 | 설명 |
+|------|------|
+| `text` | 출력할 문자열 |
+| `org` | 문자열 **좌하단** 기준 좌표 (x, y) |
+| `fontFace` | 글꼴 상수 |
+| `fontScale` | 글자 크기 배율 |
+
+> 주의: `org`는 문자열의 **좌하단** 좌표이다! (좌상단이 아님)
+
+**폰트 종류**
+
+| 상수 | 설명 |
+|------|------|
+| `cv2.FONT_HERSHEY_SIMPLEX` | 기본 산세리프체 |
+| `cv2.FONT_HERSHEY_PLAIN` | 작은 산세리프체 |
+| `cv2.FONT_HERSHEY_DUPLEX` | 두 선 산세리프체 |
+| `cv2.FONT_HERSHEY_COMPLEX` | 세리프체 |
+| `cv2.FONT_ITALIC` | 이탤릭 (OR 연산으로 조합) |
+
+```python
+# 08.put_text.py
+cv2.putText(image, 'SIMPLEX', (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 2, brown)
+# 이탤릭 조합: | 연산 사용
+fontFace = cv2.FONT_HERSHEY_PLAIN | cv2.FONT_ITALIC
+cv2.putText(image, 'ITALIC', pt2, fontFace, 4, violet)
+```
+
+**그림자 효과 패턴** (배경 텍스트를 살짝 이동해서 표시)
+
+```python
+shade = (pt[0] + 2, pt[1] + 2)
+cv2.putText(img, text, shade, font, scale, (0,0,0), 2)  # 검은 그림자
+cv2.putText(img, text, pt,    font, scale, color,   1)  # 원본 색상
+```
+
+---
 
 ### 4.3.3 원 그리기
 
-> 행렬에 원을 그려주는 `cv2.circle()` 함수는 다음과 같은 인수로 구성된다. 원의 중심 좌표, 반지름, 선의 색상은 반드시 지정해야 하며, 나머지 인수는 지정하지 않으면 기본 값으로 설정된다.
+```
+cv2.circle(img, center, radius, color [, thickness [, lineType]])
+```
+
+| 인수 | 설명 |
+|------|------|
+| `center` | 원의 중심 좌표 `(x, y)` |
+| `radius` | 반지름 (px) |
+| `thickness` | `-1` 또는 `FILLED` → 원 내부 채움 |
+
+```python
+# 09.draw_circle.py
+center = (image.shape[1]//2, image.shape[0]//2)  # shape은 (행, 열) → x=열, y=행
+
+cv2.circle(image, center, 100, blue)           # 외곽선만
+cv2.circle(image, pt1,   50, orange, 2)
+cv2.circle(image, pt2,   70, cyan, -1)         # 내부 채움
+```
+
+> `image.shape` → `(height, width, channel)` 이므로
+> 중심 좌표 계산 시 `shape[1]`이 x(열), `shape[0]`이 y(행)임에 주의!
+
+---
 
 ### 4.3.4 타원 그리기
 
-> 타원의 중심 좌표와 타원의 크기가 필요하다. 타원의 크기는 타원의 x축 반지름과 y축 반지름이다. 즉, 타원의 크기는 지름이 아닌 반지름을 의미한다.
-> 각도의 기준이 되는 0도는 좌표의 x축인 3시 방향이다. 각도는 시계 방향으로 회전하면서 증가하므로, 6시 방향은 90도, 9시 방향은 180도가 된다. 따라서 각도는 중심점을 기준으로 좌표의 x축과 타원의 x축 사이에 기울어진 정도를 나타낸다.
-> 호(arc)의 시작 각도(startAngle)와 종료 각도(endAngle)는 타원의 x축에서부터 호가 시작하는 위치와 끝나는 위치를 각도로 나타낸 것이다. 일반적으로 호는 4사분면에서 시작해서 3사분면을 거쳐 종료 각도까지 시계 방향으로 그려진다.
+```
+cv2.ellipse(img, center, axes, angle, startAngle, endAngle, color [, thickness])
+```
+
+| 인수 | 설명 |
+|------|------|
+| `center` | 타원 중심 좌표 `(x, y)` |
+| `axes` | 주축/수직축 **반지름** `(rx, ry)` (지름 아님!) |
+| `angle` | 타원 전체 기울기 각도 (x축 기준, 시계방향) |
+| `startAngle` | 호 시작 각도 |
+| `endAngle` | 호 종료 각도 |
+
+**각도 기준**
+
+```mermaid
+graph TD
+    subgraph 타원 각도 기준
+        A["0도 (3시 방향, x축)"]
+        B["90도 (6시 방향)"]
+        C["180도 (9시 방향)"]
+        D["270도 (12시 방향)"]
+    end
+    A --> B --> C --> D
+    style A fill:#d4edda
+```
+
+```
+0도  = 3시 방향 (x축 양의 방향)
+90도 = 6시 방향 (시계 방향으로 증가)
+startAngle=0, endAngle=360 → 완전한 타원
+startAngle=0, endAngle=180 → 아랫쪽 반원 (호)
+```
+
+```python
+# 10.draw_ellipse.py
+size = (120, 60)  # (x축 반지름, y축 반지름)
+
+cv2.ellipse(image, pt1, size, 0, 0, 360, blue, 1)      # 완전한 타원
+cv2.ellipse(image, pt2, size, 90, 0, 360, blue, 1)     # 90도 기울어진 타원
+cv2.ellipse(image, pt1, size, 0, 30, 270, orange, 4)   # 호(arc) 그리기
+```
+
+---
 
 ## 4.4 영상파일 처리
 
-> 영상파일을 읽어 들여 행렬에 저장하고, 행렬 연산 과정에서 행렬의 원소, 즉 화소값들이 표시된 영상을 필요할 때마다 눈으로 직접 확인할 수 있어야 한다. 또한, 처리된 결과 행렬을 영상파일로 저장할 수 있어야 한다.
-
-> `cv2.imread(filename[, flags])`
->
-> - filename: 적재할 영상파일 이름(디렉토리 구조 포함)
-> - flags: 적재할 영상을 행렬로 반환될 때 컬러 타입을 결정하는 상수
->
-> `cv2.imwrite(filename, img[, params])`
->
-> - filename: 저장할 영상파일 이름(디렉토리 구조 포함), 확장자명에 따라 영상파일 형식 결정
-> - img: 저장하고자 하는 행렬(영상)
-> - params: 압축 방식에 사용되는 인수 쌍(paramId, paramValue)
+> 영상파일을 읽어 행렬에 저장하고, 행렬을 다시 영상파일로 저장한다.
 
 ### 4.4.1 영상파일 읽기
 
-> OpenCV에서도 쉽게 영상파일을 데이터로 변환할 수 있다.
-> 다음 예제는 명암도 영상과 컬러 영상파일을 읽어서 행렬에 저장하는 방법을 다룸. `12.read_image1.py` 참고
+```
+cv2.imread(filename [, flags])
+```
+
+| flags | 상수 | 설명 |
+|-------|------|------|
+| 1 (기본값) | `IMREAD_COLOR` | 컬러 BGR, 3채널 uint8 |
+| 0 | `IMREAD_GRAYSCALE` | 그레이스케일, 1채널 uint8 |
+| -1 | `IMREAD_UNCHANGED` | 원본 그대로 (알파, 16/32비트 유지) |
+
+**비트 깊이별 행렬 자료형**
+
+| 파일 | flags | 반환 dtype |
+|------|-------|------------|
+| 8비트 JPG/PNG | IMREAD_COLOR | `uint8` |
+| 8비트 JPG/PNG | IMREAD_GRAYSCALE | `uint8` |
+| 16비트 TIF | IMREAD_UNCHANGED | `uint16` |
+| 32비트 TIF | IMREAD_UNCHANGED | `float32` |
+
+```python
+# 12.read_image1.py - 읽기 및 행렬 정보 확인
+gray2gray  = cv2.imread("images/read_gray.jpg", cv2.IMREAD_GRAYSCALE)
+gray2color = cv2.imread("images/read_gray.jpg", cv2.IMREAD_COLOR)
+
+# 필수: 읽기 실패 예외처리
+if gray2gray is None:
+    raise Exception("영상파일 읽기 에러")
+
+print(gray2gray.shape)   # (H, W)       ← 그레이스케일
+print(gray2color.shape)  # (H, W, 3)    ← 컬러
+print(gray2gray[100, 100])     # 화소값 확인 (스칼라)
+print(gray2color[100, 100])    # 화소값 확인 (BGR 3원소 배열)
+```
+
+> imread() 실패 시 None 반환 → **반드시 None 체크** 필요
+
+---
+
+### 4.4.2 행렬을 영상파일로 저장
+
+```
+cv2.imwrite(filename, img [, params])
+```
+
+| 인수 | 설명 |
+|------|------|
+| `filename` | 저장 경로 + 이름 (확장자가 포맷 결정) |
+| `img` | 저장할 행렬 |
+| `params` | 압축 파라미터 쌍 `(paramId, value)` |
+
+**포맷별 params 예시**
+
+```python
+# 15.write_image1.py
+params_jpg = (cv2.IMWRITE_JPEG_QUALITY, 10)   # JPEG 화질 0~100 (기본 95)
+params_png = [cv2.IMWRITE_PNG_COMPRESSION, 9] # PNG 압축 레벨 0~9
+
+cv2.imwrite("output.jpg", image)               # 기본 화질
+cv2.imwrite("output.jpg", image, params_jpg)   # 화질 10 (저화질 저용량)
+cv2.imwrite("output.png", image, params_png)   # 최대 압축
+```
+
+**비트 깊이 변환 저장 (`16.write_image2.py`)**
+
+```python
+image8  = cv2.imread("image.jpg")
+image16 = np.uint16(image8 * (65535/255))   # 8비트 → 16비트 스케일
+image32 = np.float32(image8 * (1/255))      # 8비트 → 0.0~1.0 float32
+
+cv2.imwrite('output_16.tif', image16)   # 16비트 TIF 저장
+cv2.imwrite('output_32.tif', image32)   # 32비트 TIF 저장
+```
+
+---
+
+## 4.5 비디오 처리
+
+> 비디오 파일은 코덱(Codec)으로 압축 저장된다.
+> `VideoCapture` → 압축 해제하여 프레임 읽기
+> `VideoWriter` → 프레임을 코덱으로 압축하여 파일 저장
+
+```mermaid
+flowchart LR
+    CAM["📷 카메라 / 동영상 파일"]
+    VC["VideoCapture\ncv2.VideoCapture(0)\ncv2.VideoCapture(path)"]
+    PROC["영상처리 알고리즘"]
+    SHOW["cv2.imshow()"]
+    VW["VideoWriter\n파일 저장"]
+
+    CAM --> VC
+    VC -- "capture.read()\nret, frame" --> PROC
+    PROC --> SHOW
+    PROC --> VW
+```
+
+### VideoCapture 주요 메서드
+
+| 메서드 | 설명 |
+|--------|------|
+| `VideoCapture(0)` | 0번 카메라 연결 |
+| `VideoCapture(path)` | 동영상 파일 열기 |
+| `isOpened()` | 연결 성공 여부 확인 |
+| `read()` | `(ret, frame)` 반환, 프레임 읽기 |
+| `get(propId)` | 속성값 읽기 |
+| `set(propId, value)` | 속성값 변경 |
+| `release()` | 리소스 해제 (반드시 호출) |
+
+**주요 CAP_PROP 속성**
+
+| 속성 상수 | 설명 |
+|-----------|------|
+| `CAP_PROP_FRAME_WIDTH` | 프레임 너비 |
+| `CAP_PROP_FRAME_HEIGHT` | 프레임 높이 |
+| `CAP_PROP_FPS` | 초당 프레임 수 |
+| `CAP_PROP_EXPOSURE` | 노출값 |
+| `CAP_PROP_BRIGHTNESS` | 밝기 |
+| `CAP_PROP_ZOOM` | 줌 |
+| `CAP_PROP_FOCUS` | 초점 |
+| `CAP_PROP_AUTOFOCUS` | 자동초점 (0=끄기) |
+
+### VideoWriter 주요 인수
+
+```
+cv2.VideoWriter(filename, fourcc, fps, frameSize [, isColor])
+```
+
+| 인수 | 설명 |
+|------|------|
+| `filename` | 저장할 동영상 파일 이름 |
+| `fourcc` | 코덱 4문자 코드 |
+| `fps` | 초당 프레임 수 |
+| `frameSize` | 프레임 크기 `(width, height)` |
+| `isColor` | True=컬러, False=그레이스케일 |
+
+> 코덱 목록: https://fourcc.org/codecs.php
+
+---
+
+### 4.5.1 카메라에서 프레임 읽기
+
+```python
+# 17.read_pccamera.py
+capture = cv2.VideoCapture(0)  # 0번 카메라
+if not capture.isOpened():
+    raise Exception("카메라 연결 실패")
+
+while True:
+    ret, frame = capture.read()
+    if not ret: break
+    if cv2.waitKey(30) >= 0: break  # 아무 키나 누르면 종료
+
+    cv2.imshow("Camera", frame)
+
+capture.release()  # 리소스 해제 필수
+cv2.destroyAllWindows()
+```
+
+---
+
+### 4.5.2 카메라 속성 설정하기
+
+```python
+# 18.set_camera_attr.py
+capture.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+capture.set(cv2.CAP_PROP_AUTOFOCUS, 0)   # 자동초점 OFF → 수동 초점 조절 가능
+capture.set(cv2.CAP_PROP_BRIGHTNESS, 100)
+
+# 트랙바로 줌/초점 실시간 조절
+def zoom_bar(value):
+    capture.set(cv2.CAP_PROP_ZOOM, value)
+def focus_bar(value):
+    capture.set(cv2.CAP_PROP_FOCUS, value)
+
+cv2.createTrackbar('zoom',  title, 0, 10, zoom_bar)
+cv2.createTrackbar('focus', title, 0, 40, focus_bar)
+```
+
+> 초점 값: **크면 가까운 곳**, **작으면 먼 곳**에 초점
+
+---
+
+### 4.5.3 카메라 프레임을 동영상 파일로 저장
+
+```python
+# 19.write_camera_frame.py
+fps    = 29.97
+delay  = round(1000 / fps)                     # 프레임 간 지연(ms)
+fourcc = cv2.VideoWriter.fourcc(*'DX50')        # 코덱 설정
+
+writer = cv2.VideoWriter("output.avi", fourcc, fps, (640, 480))
+if not writer.isOpened():
+    raise Exception("동영상 파일 생성 실패")
+
+while True:
+    ret, frame = capture.read()
+    if not ret or cv2.waitKey(delay) >= 0: break
+    writer.write(frame)              # 프레임을 동영상으로 저장
+    cv2.imshow("Recording", frame)
+
+writer.release()    # 저장 완료 → 해제 필수
+capture.release()
+```
+
+---
+
+### 4.5.4 동영상 파일 읽기
+
+```python
+# 20.read_video_file.py
+capture = cv2.VideoCapture("video_file.avi")
+frame_rate = capture.get(cv2.CAP_PROP_FPS)
+delay = int(1000 / frame_rate)  # 원본 fps에 맞게 재생
+frame_cnt = 0
+
+while True:
+    ret, frame = capture.read()
+    if not ret or cv2.waitKey(delay) >= 0: break
+
+    # 채널 분리 → 처리 → 합성
+    blue, green, red = cv2.split(frame)
+    if 100 <= frame_cnt < 200:
+        cv2.add(blue, 100, blue)       # blue 채널 밝기 +100
+    frame = cv2.merge([blue, green, red])
+
+    frame_cnt += 1
+    cv2.imshow('Video', frame)
+
+capture.release()
+```
+
+---
+
+## 4.6 Matplotlib 패키지 활용
+
+> Matplotlib은 파이썬 데이터 시각화 라이브러리로, Jupyter/Colab 환경에서 `cv2.imshow()` 대신 편리하게 사용한다.
+
+### OpenCV와 Matplotlib의 색상 채널 차이
+
+```mermaid
+graph LR
+    OCV["OpenCV\nimread()"] -- "BGR 순서" --> MAT["행렬"]
+    MAT -- "imshow() 그대로" --> WRONG["색상 오류!\n(R과 B 뒤바뀜)"]
+    MAT -- "cvtColor(BGR→RGB)" --> RIGHT["정상 출력"]
+
+    style WRONG fill:#f8d7da,stroke:#dc3545
+    style RIGHT fill:#d4edda,stroke:#28a745
+```
+
+> OpenCV는 **BGR**, Matplotlib은 **RGB** 순서를 사용한다.
+> Matplotlib에서 컬러 영상을 올바르게 표시하려면 채널 변환이 필요하다.
+
+```python
+# 21.matplotlib.py
+import cv2
+import matplotlib.pyplot as plt
+
+image    = cv2.imread("image.jpg", cv2.IMREAD_COLOR)
+rgb_img  = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)   # BGR → RGB 변환 필수
+gray_img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+# 단일 이미지
+plt.figure(figsize=(3, 4))
+plt.imshow(rgb_img)
+plt.title('RGB Image')
+plt.axis('off')
+
+# 서브플롯
+fig = plt.figure(figsize=(6, 4))
+plt.suptitle('subplot example')
+plt.subplot(1, 2, 1), plt.imshow(rgb_img),             plt.title('color')
+plt.subplot(1, 2, 2), plt.imshow(gray_img, cmap='gray'), plt.title('gray')
+plt.show()
+```
+
+**보간법(Interpolation) 비교 (`22.interploation.py`)**
+
+```python
+methods = ['none', 'nearest', 'bilinear', 'bicubic', 'spline16', 'spline36']
+# imshow의 interpolation 인수로 지정
+ax.imshow(grid, interpolation=method, cmap='gray')
+```
+
+| 보간법 | 특징 |
+|--------|------|
+| `none` | 보간 없음 (픽셀 그대로) |
+| `nearest` | 최근접 이웃 (빠름, 계단 현상) |
+| `bilinear` | 선형 보간 (부드러움) |
+| `bicubic` | 3차 보간 (더 부드러움) |
+| `spline16/36` | 스플라인 보간 (고품질) |
+
+---
+
+## 핵심 함수 정리
+
+```mermaid
+mindmap
+  root((Chap4 핵심))
+    윈도우 제어
+      namedWindow
+      moveWindow
+      resizeWindow
+    키보드 이벤트
+      waitKey delay 0 무한
+      waitKeyEx 방향키 포함
+    마우스 이벤트
+      setMouseCallback
+      콜백 event x y flags param
+    트랙바
+      createTrackbar
+      setTrackbarPos
+    그리기
+      line rectangle
+      putText 좌하단 기준
+      circle 내부채움 -1
+      ellipse 반지름 시계방향
+    영상파일 IO
+      imread flags 0 1 -1
+      imwrite 확장자가 포맷 결정
+    비디오
+      VideoCapture read release
+      VideoWriter write release
+    Matplotlib
+      BGR to RGB 변환 필수
+      cmap gray 그레이스케일
+```
+
+---
+
+## 연습문제
+
+1. 콜백 함수란 무엇인가?
+   나의 답변 : 함수의 인자(argumemnt)로 들어가는 함수
+   답: 개발자가 함수를 직접 호출하는 것이 아니라, 어떤 이벤트가 발생하거나 특정 시점에 도달했을 때, 시스템에서 개발자가 등록한 함수를 호출하는 방식으로 정의되는 함수
+
+2. 윈도우를 지정하는 cv2.namedWindow() 함수의 두 번째 인수(flags)에 대한 옵션은 여러 가지가 있다. 그 중에서 `cv2.WINDOW_NORMAL`와 `cv2.WINDOW_AUTOSIZE` 간의 차이를 설명하시오.
+
+- NORMAL : 사용자가 자유롭게 창의 사이즈를 수정할 수 있음
+- AUTOSIZE : 이미지의 해상도에 따라 자동적으로 정해짐
+
+3. 타원을 그리는 cv2.ellipse() 함수의 인수를 자세히 설명하시오
+   `cv2.ellipse(image, center, axes, angle, startAngle, endAngle, color, thickness)`
+
+- image : 타원이 그려질 이미지
+- center : 타원의 중심 지점 (x, y)
+- axes : 주축과 수직축의 반지름의 길이
+- angle: 타원의 도는 각도
+- startAngle: 호의 시작 각도
+- endAngle: 호의 끝의 각도
+- color: BGR 색 튜플
+- thickness: 테두리 두께(-1 값은 전체 색칠)
+
+4. OpenCV이 제공하는, 마우스 이벤트와 트랙바 이벤트를 제어할 콜백 함수를 시스템에 등록하는 함수는 각각 무엇이며, 인수가 어떻게 구성되었는지 자세히 설명하시오
+   마우스 이벤트 콜백함수 등록 함수
+   `cv2.setMouseCallback(windowName, onMouse [, param])`
+   - 역할: 특정 윈도우에서 발생하는 마우스 이벤트(클릭, 이동, 드래그 등)를 지정한 콜백 함수로 전달.
+     인수 구성:
+   - `windowName`: 이벤트를 받을 윈도우 이름 (예: "Keyboard Event").
+   - `onMouse`: 마우스 이벤트가 발생했을 때 호출될 사용자 정의 함수.
+   - 함수 형태: `onMouse(event, x, y, flags, param)`
+     - `event`: 이벤트 종류 (예: `cv2.EVENT_LBUTTONDOWN`, `cv2.EVENT_MOUSEMOVE` 등).
+     - `x, y`: 마우스 좌표.
+     - `flags`: 키보드/마우스 상태 플래그 (예: `cv2.EVENT_FLAG_CTRLKEY`).
+     - `param`: 추가 사용자 데이터(옵션).
+   - `param` : 콜백 함수에 전달할 사용자 정의 데이터 (기본값은 None).
